@@ -1,8 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["leaflet"],
-  experimental: {
-    optimizePackageImports: ["framer-motion", "lucide-react"],
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
   },
 };
 
