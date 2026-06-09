@@ -90,41 +90,9 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
     return () => clearInterval(interval);
   }, []);
 
-  async function handleLogout(e: React.MouseEvent) {
+  function handleLogout(e: React.MouseEvent) {
     e.preventDefault();
-
-    const confirmMsg =
-      locale === "ar"
-        ? "هل أنت متأكد من رغبتك في تسجيل الخروج؟"
-        : "Are you sure you want to log out?";
-
-    if (!confirm(confirmMsg)) return;
-
-    try {
-      const token =
-        localStorage.getItem("ejaf_token") ||
-        localStorage.getItem("admin_token");
-
-      if (token) {
-        await fetch("http://127.0.0.1:8000/api/auth/logout", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        });
-      }
-    } catch (err) {
-      console.error("Logout API failed:", err);
-    } finally {
-      localStorage.removeItem("ejaf_token");
-      localStorage.removeItem("admin_token");
-      localStorage.removeItem("ejaf_user");
-      sessionStorage.clear();
-      document.cookie = "ejaf_token=; path=/; max-age=0";
-      router.push("/admin/login");
-    }
+    router.push(locale === "ar" ? "/admin/logout?lang=ar" : "/admin/logout");
   }
 
   return (
