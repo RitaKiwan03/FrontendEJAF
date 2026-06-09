@@ -1,0 +1,206 @@
+@import "leaflet/dist/leaflet.css";
+@import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --background: #000510;
+  --foreground: #e2e8f0;
+  --surface: rgba(0, 13, 36, 0.72);
+  --brand-blue: #00318C;
+  --brand-cyan: #66FFFF;
+  --brand-yellow: #FDF156;
+  --brand-chartreuse: #CCFF33;
+  --brand-carolina: #7BAFDE;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--foreground);
+  background:
+    radial-gradient(circle at 20% 10%, rgba(0, 49, 140, 0.25) 0%, transparent 35%),
+    radial-gradient(circle at 80% 15%, rgba(102, 255, 255, 0.08) 0%, transparent 28%),
+    radial-gradient(circle at 50% 80%, rgba(0, 49, 140, 0.15) 0%, transparent 35%),
+    linear-gradient(180deg, #000d24 0%, #000510 40%, #000000 100%);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ✅ Grid overlay - أدق وأجمل */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(102, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(102, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  opacity: 0.6;
+  z-index: 0;
+}
+
+/* ✅ Brand blue glow في الأعلى */
+body::after {
+  content: "";
+  position: fixed;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 400px;
+  background: radial-gradient(ellipse, rgba(0, 49, 140, 0.3) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+html[dir="rtl"] body {
+  direction: rtl;
+  font-family: "Noto Kufi Arabic", "Segoe UI", "Tahoma", var(--font-geist-sans), sans-serif;
+}
+
+html[dir="rtl"] [class*="tracking-["] {
+  letter-spacing: 0.04em;
+}
+
+html[dir="rtl"] nav,
+html[dir="rtl"] header,
+html[dir="rtl"] footer {
+  direction: rtl;
+}
+
+html[dir="rtl"] .flex-row-rtl {
+  flex-direction: row-reverse;
+}
+
+a, button, input, textarea, select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(102, 255, 255, 0.25);
+  color: #f8fafc;
+}
+
+button, a, input, textarea {
+  transition-property: transform, color, background-color, border-color, box-shadow, opacity;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(102, 255, 255, 0.75);
+  outline-offset: 3px;
+}
+
+/* ✅ Scrollbar بألوان البراند */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(0, 5, 16, 0.95); }
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 3px solid rgba(0, 5, 16, 0.95);
+  background: linear-gradient(180deg, rgba(0, 49, 140, 0.8), rgba(102, 255, 255, 0.5));
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #00318C, #66FFFF);
+}
+
+/* ✅ Glass panel محسّن */
+.glass-panel {
+  background: rgba(0, 13, 36, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(102, 255, 255, 0.08);
+}
+
+/* ✅ Brand glow effects */
+.glow-blue {
+  box-shadow: 0 0 40px rgba(0, 49, 140, 0.4), 0 0 80px rgba(0, 49, 140, 0.2);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 30px rgba(102, 255, 255, 0.2), 0 0 60px rgba(102, 255, 255, 0.1);
+}
+
+.glow-text-cyan {
+  text-shadow: 0 0 20px rgba(102, 255, 255, 0.5);
+}
+
+/* ✅ Gradient text */
+.text-brand-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #66FFFF 50%, #7BAFDE 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-blue-gradient {
+  background: linear-gradient(135deg, #7BAFDE 0%, #66FFFF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ✅ Animated border */
+.border-brand-animated {
+  position: relative;
+}
+
+.border-brand-animated::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(0, 49, 140, 0.8), rgba(102, 255, 255, 0.4), rgba(0, 49, 140, 0.8));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ✅ Smooth page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.text-balance { text-wrap: balance; }
+
+/* ✅ GSAP will-change optimization */
+.gsap-animate {
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
