@@ -13,7 +13,7 @@ export default async function AdminProjectsPage({ searchParams }: Props) {
   let initial: any[] = [];
 
   try {
-    const res = await fetch(`${API_URL}/api/admin/projects`, {
+    const res = await fetch(`${API_URL}/api/admin/projects/public`, {
       cache: "no-store",
       headers: { Accept: "application/json" },
     });
@@ -28,7 +28,7 @@ export default async function AdminProjectsPage({ searchParams }: Props) {
         image: p.image ?? "",
         technologies: Array.isArray(p.technologies)
           ? p.technologies.join(", ")
-          : (p.technologies ?? ""),
+          : (p.technologies?.en?.join(", ") ?? ""),
       }));
     }
   } catch (e) {
