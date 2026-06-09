@@ -215,7 +215,8 @@ export const siteCopy = {
       blog: "Manage blog",
     },
     footerNote: "Premium technology services delivered across Iraq.",
-    footerCopyright: "© 2026 EJAF Technology. All rights reserved.",
+    footerCopyright:
+      "© 2026 EJAF Technology. All rights reserved. — Made with love by Rayan",
     serviceLabel: "Service",
     readArticleLabel: "Read article",
   },
@@ -309,7 +310,8 @@ export const siteCopy = {
       blog: "إدارة المدونة",
     },
     footerNote: "خدمات تقنية فاخرة تقدم عبر العراق.",
-    footerCopyright: "© 2026 EJAF Technology. جميع الحقوق محفوظة.",
+    footerCopyright:
+      "© 2026 EJAF Technology. All rights reserved. — Made with love by Rayan",
     serviceLabel: "خدمة",
     readArticleLabel: "اقرأ المقال",
   },

@@ -256,7 +256,7 @@ export default function AdminLocationsPage({
               </p>
               <label className="block space-y-1.5 text-sm text-slate-300">
                 <span className="font-mono text-xs text-slate-500">
-                  eyebrow (city name)
+                  city name
                 </span>
                 <input
                   type="text"
