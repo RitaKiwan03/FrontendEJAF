@@ -13,7 +13,7 @@ export default async function AdminProjectsPage({ searchParams }: Props) {
   let initial: any[] = [];
 
   try {
-    const res = await fetch(`${API_URL}/api/admin/projects/public`, {
+    const res = await fetch(`${API_URL}/api/admin/projects`, {
       cache: "no-store",
       headers: { Accept: "application/json" },
     });
