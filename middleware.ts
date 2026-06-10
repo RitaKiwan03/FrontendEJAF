@@ -2,21 +2,23 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get("ejaf_token")?.value;
-  const pathname = request.nextUrl.pathname;
+  const token = request.cookies.get("ejaf_token");
+  const { pathname } = request.nextUrl;
 
-  const isPublicPage =
-    pathname === "/admin/login" || pathname === "/admin/signup";
-  const hasValidToken = !!token && token.trim() !== "";
+  // 1. تعريف الصفحات العامة
+  const isLoginPage = pathname === "/admin/login";
 
-  // 1. إذا كان المستخدم يحاول دخول صفحة عامة (Login) وهو مسجل مسبقاً، وجهه للـ Dashboard
-  if (isPublicPage && hasValidToken) {
-    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+  // 2. التحقق من وجود التوكن
+  const hasToken = !!token?.value;
+
+  // 3. إذا كان المستخدم لا يملك توكن ويحاول دخول أي صفحة admin غير الـ login
+  if (!hasToken && !isLoginPage) {
+    return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
-  // 2. إذا كان يحاول دخول صفحة محمية (أي شيء يبدأ بـ /admin/ ولا يساوي login) وليس لديه توكن
-  if (!isPublicPage && !hasValidToken) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+  // 4. إذا كان المستخدم يملك توكن ويحاول دخول صفحة الـ login، وجهه للداشبورد
+  if (hasToken && isLoginPage) {
+    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
   }
 
   return NextResponse.next();
