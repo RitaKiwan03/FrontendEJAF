@@ -112,7 +112,7 @@ export async function uploadFile(file: File, isAr = false): Promise<string> {
   }
 
   const data = await res.json();
-  return `${API_URL}${data.url}`;
+  return data.url;
 }
 
 // ==================== SERVICES ====================
@@ -425,5 +425,5 @@ export async function uploadLogo(file: File, isAr = false): Promise<string> {
     throw new Error(t("فشل رفع اللوغو", "Failed to upload logo", isAr));
 
   const data = await res.json();
-  return `${API_URL}${data.url}`;
+  return data.url;
 }
