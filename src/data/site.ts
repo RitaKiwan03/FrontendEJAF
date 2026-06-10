@@ -216,7 +216,7 @@ export const siteCopy = {
     },
     footerNote: "Premium technology services delivered across Iraq.",
     footerCopyright:
-      "© 2026 EJAF Technology. All rights reserved. — Made with love by Rayan",
+      "©2026 EJAF Technology. All rights reserved. — Made with love by Rayan",
     serviceLabel: "Service",
     readArticleLabel: "Read article",
   },
