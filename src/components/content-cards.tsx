@@ -68,28 +68,30 @@ export function ProjectCard({
 }: ProjectCardProps) {
   return (
     <article className="overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/70 shadow-[0_20px_60px_rgba(2,6,23,0.45)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-1">
-      <div
-        className="relative h-64 border-b border-white/10 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.18),_transparent_36%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(15,23,42,0.55))]"
-        style={{
-          backgroundImage: image
-            ? `linear-gradient(135deg, rgba(15,23,42,0.68), rgba(15,23,42,0.25)), url(${image})`
-            : undefined,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      />
+      {/* ← استخدم <img> بدل background-image */}
+      <div className="relative h-64 border-b border-white/10 bg-slate-900 overflow-hidden">
+        {image ? (
+          <img
+            src={image}
+            alt={title}
+            className="h-full w-full object-cover opacity-90 transition-transform duration-500 hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.18),_transparent_36%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(15,23,42,0.55))]" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent" />
+      </div>
+
       <div className="space-y-4 p-6">
-        {/* الكود المطور بعد معالجة الـ Types والتأكد من عدم كسر الصفحة */}
         <div className="flex flex-wrap gap-2">
           {(() => {
             let techString = "";
-
             if (technologies && typeof technologies === "object") {
               techString = isAr ? technologies.ar || "" : technologies.en || "";
             } else if (typeof technologies === "string") {
               techString = technologies;
             }
-
             return techString
               .split(",")
               .map((t) => t.trim())
@@ -104,7 +106,6 @@ export function ProjectCard({
               ));
           })()}
         </div>
-
         <h3 className="text-2xl font-semibold text-white">{title}</h3>
         <p className="text-sm leading-7 text-slate-300">{description}</p>
       </div>
