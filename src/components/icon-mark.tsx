@@ -8,7 +8,13 @@ type IconMarkProps = {
 };
 
 export function IconMark({ name, className }: IconMarkProps) {
-  const Icon = (LucideIcons as any)[name] as
+  // تحويل اسم الأيقونة: server → Server, wifi → Wifi, folder-kanban → FolderKanban
+  const pascalName = name
+    .split(/[-_\s]/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join("");
+
+  const Icon = (LucideIcons as any)[pascalName] as
     | React.ComponentType<{ className?: string; strokeWidth?: number }>
     | undefined;
 
