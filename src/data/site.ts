@@ -147,7 +147,7 @@ export const siteCopy = {
         "Visual stories that show how EJAF approaches enterprise networking, cloud adoption, and security programs.",
       blogTitle: "Latest insights",
       blogDescription:
-        "Technical articles and business notes that can later be connected to Laravel endpoints without changing the UI.",
+        "Explore our latest articles on technology, infrastructure, and digital transformation across Iraq.",
       techSuccessEyebrow: "Technological success",
       techSuccessTitle:
         "We focus on clear delivery, practical value, and long-term reliability.",
@@ -244,7 +244,7 @@ export const siteCopy = {
         "قصص بصرية توضح كيفية تعامل EJAF مع شبكات المؤسسات واعتماد السحابة وبرامج الأمن.",
       blogTitle: "آخر الرؤى",
       blogDescription:
-        "مقالات تقنية وملاحظات أعمال يمكن ربطها لاحقاً بنقاط نهاية Laravel دون تغيير الواجهة.",
+        "اكتشف أحدث مقالاتنا في التكنولوجيا والبنية التحتية والتحول الرقمي في العراق.",
       techSuccessEyebrow: "النجاح التقني",
       techSuccessTitle:
         "نركز على التسليم الواضح والقيمة العملية والموثوقية طويلة الأمد.",
