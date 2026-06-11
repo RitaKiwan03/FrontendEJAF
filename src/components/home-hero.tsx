@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 import { Reveal } from "@/components/content-motion";
+import { StatCounter } from "@/components/stats-counter";
 import { IconMark } from "@/components/icon-mark";
 import { siteCopy, siteStats } from "@/data/site";
 import { createLocalizedHref } from "@/lib/i18n";
@@ -68,14 +69,11 @@ export function HomeHero({ locale }: HomeHeroProps) {
           <div className="grid gap-4 sm:grid-cols-2">
             {siteStats.map((stat, index) => (
               <Reveal key={stat.label[locale]} delay={0.04 * index}>
-                <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] px-6 py-5 shadow-lg shadow-cyan-950/10 backdrop-blur transition-transform duration-300 hover:-translate-y-1">
-                  <p className="text-3xl font-semibold text-white">
-                    {stat.value}
-                  </p>
-                  <p className="mt-2 text-sm uppercase tracking-[0.2em] text-slate-400">
-                    {stat.label[locale]}
-                  </p>
-                </div>
+                <StatCounter
+                  finalValue={stat.value}
+                  label={stat.label[locale]}
+                  delay={0.04 * index}
+                />
               </Reveal>
             ))}
           </div>
