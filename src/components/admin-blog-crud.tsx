@@ -20,7 +20,6 @@ type PostRecord = {
     ar: string | string[];
   };
   createdAt: string;
-  status: "published" | "draft";
 };
 
 type Props = { initial: PostRecord[]; isAr: boolean };
@@ -37,7 +36,6 @@ const empty = (): PostRecord => ({
   image: "",
   tags: { en: "", ar: "" },
   createdAt: new Date().toISOString().slice(0, 10),
-  status: "published",
 });
 
 export function AdminBlogCrud({ initial, isAr }: Props) {
@@ -360,30 +358,6 @@ export function AdminBlogCrud({ initial, isAr }: Props) {
                 className={`${inputCls} ${isAr ? "text-right" : "text-left"}`}
               />
             </label>
-
-            <div className="block space-y-1.5 text-sm text-slate-300 sm:col-span-2">
-              <span
-                className={`font-mono text-xs text-slate-500 block ${isAr ? "text-right" : "text-left"}`}
-              >
-                {isAr ? "حالة النشر" : "Post Status"}
-              </span>
-              <div className="flex items-center gap-3 mt-1">
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, status: "published" })}
-                  className={`flex-1 rounded-xl py-2 text-xs font-semibold border transition-all ${form.status === "published" ? "bg-emerald-500/20 border-emerald-400 text-emerald-300" : "bg-white/[0.02] border-white/10 text-slate-400"}`}
-                >
-                  {isAr ? "منشور 🟢" : "Published 🟢"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, status: "draft" })}
-                  className={`flex-1 rounded-xl py-2 text-xs font-semibold border transition-all ${form.status === "draft" ? "bg-amber-500/20 border-amber-400 text-amber-300" : "bg-white/[0.02] border-white/10 text-slate-400"}`}
-                >
-                  {isAr ? "مسودة 🟡" : "Draft 🟡"}
-                </button>
-              </div>
-            </div>
           </div>
 
           <div className="mt-4">
@@ -441,11 +415,6 @@ export function AdminBlogCrud({ initial, isAr }: Props) {
               <th
                 className={`px-5 py-3 hidden md:table-cell ${isAr ? "text-right" : "text-left"}`}
               >
-                {isAr ? "الحالة" : "Status"}
-              </th>
-              <th
-                className={`px-5 py-3 hidden md:table-cell ${isAr ? "text-right" : "text-left"}`}
-              >
                 {isAr ? "التاريخ" : "Date"}
               </th>
               <th
@@ -496,19 +465,6 @@ export function AdminBlogCrud({ initial, isAr }: Props) {
                       {r.title_en}
                     </p>
                   )}
-                </td>
-                <td className="px-5 py-3 hidden md:table-cell">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${r.status === "published" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"}`}
-                  >
-                    {r.status === "published"
-                      ? isAr
-                        ? "منشور"
-                        : "Published"
-                      : isAr
-                        ? "مسودة"
-                        : "Draft"}
-                  </span>
                 </td>
                 <td className="px-5 py-3 text-slate-400 hidden md:table-cell">
                   {r.createdAt}

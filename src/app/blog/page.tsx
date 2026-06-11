@@ -56,12 +56,8 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                       {formatLocalizedDate(featuredPost.createdAt, locale)}
                     </span>
                     {/* ✅ tags كـ string مباشرة */}
-                    {featuredPost.tags && (
-                      <span>
-                        {featuredPost.tags && featuredPost.tags.length > 0 && (
-                          <span>{featuredPost.tags[0]}</span>
-                        )}
-                      </span>
+                    {featuredPost.tags && featuredPost.tags.length > 0 && (
+                      <span>{featuredPost.tags.join(" · ")}</span>
                     )}
                   </div>
                   <Link

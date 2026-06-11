@@ -9,24 +9,22 @@ export function FaviconSync() {
     fetch(`${API_URL}/api/settings`)
       .then((r) => r.json())
       .then((data) => {
-        if (!data.logo_url) return;
+        const rawUrl = data.favicon_url || data.logo_url;
+        if (!rawUrl) return;
 
-        const url = API_URL + data.logo_url;
+        const url = rawUrl.startsWith("http") ? rawUrl : API_URL + rawUrl;
 
-        // ✅ تجاهل GIF للـ favicon - استخدم اللوغو الأصلي فقط
         const isGif = url.toLowerCase().endsWith(".gif");
         if (isGif) return;
 
-        // ✅ احذف الـ favicon القديم
         document
           .querySelectorAll("link[rel*='icon']")
           .forEach((el) => el.remove());
 
-        // ✅ أضف الجديد
         const link = document.createElement("link");
         link.rel = "icon";
         link.type = url.endsWith(".svg") ? "image/svg+xml" : "image/png";
-        link.href = url + "?v=" + Date.now(); // منع الـ cache
+        link.href = url + "?v=" + Date.now();
         document.head.appendChild(link);
       })
       .catch(() => {});
