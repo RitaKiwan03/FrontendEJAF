@@ -11,7 +11,6 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        // ✅ EJAF Brand Colors
         brand: {
           blue: "#00318C",
           cyan: "#66FFFF",
@@ -30,6 +29,8 @@ const config: Config = {
         "fade-up": "fadeUp 0.6s ease-out forwards",
         "fade-in": "fadeIn 0.5s ease-out forwards",
         "glow-pulse": "glowPulse 3s ease-in-out infinite",
+        marquee: "marquee 35s linear infinite",
+        "marquee-reverse": "marquee-reverse 35s linear infinite",
       },
       keyframes: {
         fadeUp: {
@@ -43,6 +44,14 @@ const config: Config = {
         glowPulse: {
           "0%, 100%": { opacity: "0.6" },
           "50%": { opacity: "1" },
+        },
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+        "marquee-reverse": {
+          "0%": { transform: "translateX(-50%)" },
+          "100%": { transform: "translateX(0)" },
         },
       },
       boxShadow: {
