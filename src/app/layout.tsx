@@ -8,7 +8,8 @@ import { LocaleSync } from "@/components/locale-sync";
 import { SiteMotion } from "@/components/site-motion";
 import { VisitorTracker } from "@/components/visitor-tracker";
 import { SmoothScroll } from "@/components/smooth-scroll";
-import { FaviconSync } from "@/app/favicon-sync";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -31,18 +32,43 @@ export const metadata: Metadata = {
     "Premium frontend for EJAF Technology with typed content, bilingual support, and Laravel-ready APIs.",
 };
 
-export default function RootLayout({
+async function getFaviconUrl(): Promise<string | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/settings`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const url = data.favicon_url || data.logo_url;
+    if (!url) return null;
+    return url.startsWith("http") ? url : API_URL + url;
+  } catch {
+    return null;
+  }
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const faviconUrl = await getFaviconUrl();
+
   return (
     <html lang="en" dir="ltr">
+      <head>
+        {faviconUrl && (
+          <link
+            rel="icon"
+            href={faviconUrl}
+            type={faviconUrl.endsWith(".svg") ? "image/svg+xml" : "image/png"}
+          />
+        )}
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Suspense fallback={null}>
-          <FaviconSync />
           <LocaleSync />
           <VisitorTracker />
           <SmoothScroll>
