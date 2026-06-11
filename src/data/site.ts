@@ -311,7 +311,7 @@ export const siteCopy = {
     },
     footerNote: "خدمات تقنية فاخرة تقدم عبر العراق.",
     footerCopyright:
-      "© 2026 EJAF Technology. All rights reserved. — Made with love by Rayan",
+      "Copyright © 2026 EJAF Technology. All rights reserved. — Made with love by Rayan",
     serviceLabel: "خدمة",
     readArticleLabel: "اقرأ المقال",
   },
