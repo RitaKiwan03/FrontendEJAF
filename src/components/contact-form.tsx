@@ -142,11 +142,11 @@ export function ContactForm({
         <select
           value={phoneCode}
           onChange={(e) => setPhoneCode(e.target.value)}
-          className="rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-3 text-sm text-white outline-none focus:border-cyan-300/40 cursor-pointer"
+          className="w-28 shrink-0 rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-3 text-sm text-white outline-none focus:border-cyan-300/40 cursor-pointer"
         >
           {COUNTRY_CODES.map((c) => (
             <option key={c.code} value={c.code} className="bg-slate-900">
-              {c.flag} {c.code} {c.name}
+              {c.flag} {c.code}
             </option>
           ))}
         </select>
