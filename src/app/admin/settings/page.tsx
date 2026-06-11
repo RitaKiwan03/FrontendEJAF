@@ -39,8 +39,18 @@ export default function AdminSettingsPage({ searchParams }: Props) {
       // فقط حدّث إذا القيمة موجودة — لا تُصفّر القيم الحالية
       if (data.phone !== undefined) setPhone(data.phone || "");
       if (data.email !== undefined) setEmail(data.email || "");
-      if (data.logo_url) setLogoUrl(API_URL + data.logo_url);
-      if (data.favicon_url) setFaviconUrl(API_URL + data.favicon_url);
+      if (data.logo_url)
+        setLogoUrl(
+          data.logo_url.startsWith("http")
+            ? data.logo_url
+            : API_URL + data.logo_url,
+        );
+      if (data.favicon_url)
+        setFaviconUrl(
+          data.favicon_url.startsWith("http")
+            ? data.favicon_url
+            : API_URL + data.favicon_url,
+        );
     } catch {
       setError(isAr ? "فشل جلب الإعدادات" : "Failed to load settings");
     } finally {
@@ -127,7 +137,7 @@ export default function AdminSettingsPage({ searchParams }: Props) {
         );
 
       const data = await res.json();
-      const fullUrl = API_URL + data.url;
+      const fullUrl = data.url.startsWith("http") ? data.url : API_URL + data.url;
       setFaviconUrl(fullUrl);
       setFaviconPreview(null);
       updateFaviconInBrowser(fullUrl);
