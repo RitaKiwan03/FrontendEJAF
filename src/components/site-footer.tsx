@@ -48,7 +48,7 @@ export function SiteFooter() {
 
         <div className="mt-6 flex flex-col items-center gap-3 text-sm text-slate-500">
           <div className="text-center leading-6">
-            <p>Copyright © 2026 EJAF Technology. All rights reserved</p>
+            <p>Copyright © 2026 EJAF Technology. All rights reserved.</p>
             <p className="flex items-center justify-center gap-1">
               Made with
               <svg
