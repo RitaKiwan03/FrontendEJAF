@@ -57,7 +57,11 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                     </span>
                     {/* ✅ tags كـ string مباشرة */}
                     {featuredPost.tags && featuredPost.tags.length > 0 && (
-                      <span>{featuredPost.tags.join(" · ")}</span>
+                      <span>
+                        {Array.isArray(featuredPost.tags)
+                          ? featuredPost.tags.join(" · ")
+                          : featuredPost.tags}
+                      </span>
                     )}
                   </div>
                   <Link
