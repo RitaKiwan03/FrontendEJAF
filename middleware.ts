@@ -4,19 +4,16 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ✅ تجاهل صفحة Login وReset Password
-  if (
-    pathname === "/admin/login" ||
-    pathname.startsWith("/admin/reset-password")
-  ) {
-    return NextResponse.next();
-  }
+  // ✅ الصفحات العامة - لا تحتاج token
+  const publicPaths = ["/admin/login", "/admin/reset-password"];
 
-  // ✅ التحقق من الـ token بطرق متعددة
+  const isPublic = publicPaths.some((path) => pathname.startsWith(path));
+
+  if (isPublic) return NextResponse.next();
+
+  // ✅ التحقق من الـ token
   const cookieToken = request.cookies.get("ejaf_token")?.value;
-  const authHeader = request.headers.get("authorization");
-
-  const hasToken = !!cookieToken || !!authHeader;
+  const hasToken = !!cookieToken;
 
   // ✅ إذا لا يوجد token - أعد التوجيه لـ Login
   if (!hasToken) {
@@ -29,5 +26,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin", "/admin/:path*"],
 };
