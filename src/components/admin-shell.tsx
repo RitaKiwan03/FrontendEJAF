@@ -80,6 +80,24 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
   const router = useRouter();
   const [online, setOnline] = useState<number>(0);
 
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // التحقق من وجود token
+    const token = document.cookie.includes("ejaf_token");
+
+    if (!token) {
+      // إذا لم يكن هناك token، حوّل لصفحة الدخول
+      const redirect = encodeURIComponent(pathname);
+      router.push(`/admin/login?redirect=${redirect}`);
+    } else {
+      setIsAuthorized(true);
+    }
+
+    setIsLoading(false);
+  }, [pathname, router]);
+
   useEffect(() => {
     async function fetchOnline() {
       const stats = await getVisitorStatsApi().catch(() => null);
@@ -92,6 +110,8 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
 
   function handleLogout(e: React.MouseEvent) {
     e.preventDefault();
+    document.cookie =
+      "ejaf_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     router.push(locale === "ar" ? "/admin/logout?lang=ar" : "/admin/logout");
   }
 

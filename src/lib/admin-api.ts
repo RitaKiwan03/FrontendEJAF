@@ -1,23 +1,42 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+// ✅ دالة موحدة للحصول على التوكن من cookie أو localStorage
 function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("ejaf_token");
+  // أولاً: حاول من cookie (للـ server-side و middleware)
+  if (typeof document !== "undefined") {
+    const cookieMatch = document.cookie.match(/ejaf_token=([^;]+)/);
+    if (cookieMatch) {
+      return cookieMatch[1];
+    }
+  }
+
+  // ثانياً: حاول من localStorage (للـ client-side)
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("ejaf_token");
+  }
+
+  return null;
 }
 
 function adminHeaders(isAr = false): Record<string, string> {
-  return {
+  const token = getToken();
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${getToken()}`,
     "Accept-Language": isAr ? "ar" : "en",
   };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  return headers;
 }
 
 function t(ar: string, en: string, isAr = false) {
   return isAr ? ar : en;
 }
 
-// ✅ دالة موحدة لمعالجة الأخطاء — كانت مفقودة وسببت الخطأ
+// ✅ دالة موحدة لمعالجة الأخطاء
 async function handleResponse(res: Response, errorMsg: string) {
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -27,7 +46,6 @@ async function handleResponse(res: Response, errorMsg: string) {
 }
 
 // ==================== AUTH ====================
-
 export async function loginAdmin(
   username: string,
   password: string,
@@ -44,25 +62,31 @@ export async function loginAdmin(
       data.message || t("فشل تسجيل الدخول", "Login failed", isAr),
     );
 
+  // ✅ حفظ التوكن في كلا المكانين
   localStorage.setItem("ejaf_token", data.token);
   localStorage.setItem("ejaf_user", JSON.stringify(data.user));
 
-  document.cookie = `ejaf_token=${data.token}; path=/; max-age=86400; SameSite=Lax${
-    location.protocol === "https:" ? "; Secure" : ""
-  }`;
+  // ✅ حفظ cookie مع جميع الـ attributes الصحيحة
+  const secureFlag = location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `ejaf_token=${data.token}; path=/; max-age=86400; SameSite=Lax${secureFlag}`;
+
   return data;
 }
 
 export async function logoutAdmin() {
-  // ✅ انتظر الـ logout من السيرفر
+  // ✅ انتظار الـ logout من السيرفر
   await fetch(`${API_URL}/api/auth/logout`, {
     method: "POST",
     headers: adminHeaders(),
   }).catch(() => {});
 
+  // ✅ مسح من localStorage
   localStorage.removeItem("ejaf_token");
   localStorage.removeItem("ejaf_user");
-  document.cookie = "ejaf_token=; path=/; max-age=0; SameSite=Strict";
+
+  // ✅ مسح cookie مع جميع الـ attributes الصحيحة
+  document.cookie = "ejaf_token=; path=/; max-age=0; SameSite=Lax; Secure";
+  document.cookie = "ejaf_token=; path=/; max-age=0; SameSite=Lax";
 }
 
 export function getAdminUser() {
@@ -76,11 +100,9 @@ export function isLoggedIn(): boolean {
 }
 
 // ==================== UPLOAD ====================
-
 export async function uploadFile(file: File, isAr = false): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
-
   const token = getToken();
   if (!token)
     throw new Error(
@@ -90,13 +112,11 @@ export async function uploadFile(file: File, isAr = false): Promise<string> {
         isAr,
       ),
     );
-
   const res = await fetch(`${API_URL}/api/upload`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
-
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(
@@ -108,13 +128,11 @@ export async function uploadFile(file: File, isAr = false): Promise<string> {
         ),
     );
   }
-
   const data = await res.json();
   return data.url;
 }
 
 // ==================== SERVICES ====================
-
 export async function getServicesAdmin(isAr = false) {
   const res = await fetch(`${API_URL}/api/admin/services`, {
     headers: adminHeaders(isAr),
@@ -171,7 +189,6 @@ export async function deleteService(id: string, isAr = false) {
 }
 
 // ==================== PROJECTS ====================
-
 export async function getProjectsAdmin(isAr = false) {
   const res = await fetch(`${API_URL}/api/admin/projects`, {
     headers: adminHeaders(isAr),
@@ -229,8 +246,6 @@ export async function deleteProject(id: string, isAr = false) {
 }
 
 // ==================== BLOG ====================
-
-// ✅ مصحح — يستخدم handleResponse الموجودة الآن
 export async function getAdminPosts() {
   const res = await fetch(`${API_URL}/api/admin/blog`, {
     headers: adminHeaders(),
@@ -283,7 +298,7 @@ export async function deletePost(id: string, isAr = false) {
   return res.json();
 }
 
-// ✅ مسار مصحح — كان /api/search أصبح /api/blog/search
+// ✅ مسار مصحح
 export async function searchPosts(query: string, locale: string) {
   const res = await fetch(
     `${API_URL}/api/blog/search?q=${encodeURIComponent(query)}&lang=${locale}`,
@@ -294,7 +309,6 @@ export async function searchPosts(query: string, locale: string) {
 }
 
 // ==================== CONTACT ====================
-
 export async function sendContact(payload: object, isAr = false) {
   const res = await fetch(`${API_URL}/api/contact`, {
     method: "POST",
@@ -337,7 +351,6 @@ export async function deleteMessage(id: string, isAr = false) {
 }
 
 // ==================== LOCATIONS ====================
-
 export async function getLocations(isAr = false) {
   const res = await fetch(`${API_URL}/api/locations`, {
     headers: adminHeaders(isAr),
@@ -385,7 +398,6 @@ export async function deleteLocation(id: string, isAr = false) {
 }
 
 // ==================== SETTINGS ====================
-
 export async function getSettings(isAr = false) {
   const res = await fetch(`${API_URL}/api/settings`, {
     headers: { Accept: "application/json" },
@@ -412,16 +424,14 @@ export async function updateSettings(
 export async function uploadLogo(file: File, isAr = false): Promise<string> {
   const formData = new FormData();
   formData.append("logo", file);
-
+  const token = getToken();
   const res = await fetch(`${API_URL}/api/settings/logo`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${getToken()}` },
+    headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
-
   if (!res.ok)
     throw new Error(t("فشل رفع اللوغو", "Failed to upload logo", isAr));
-
   const data = await res.json();
   return data.url;
 }
