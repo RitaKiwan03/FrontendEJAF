@@ -298,8 +298,8 @@ export function AdminServicesCrud({ initial, isAr }: Props) {
         </div>
       </form>
 
-      {/* الجدول المعروض في الأسفل بقوائمه */}
-      <div className="overflow-hidden rounded-[1.75rem] border border-white/10">
+      {/* الجدول */}
+      <div className="overflow-x-auto rounded-[1.75rem] border border-white/10">
         <table className="w-full text-sm">
           <thead className="bg-white/[0.04] text-[11px] uppercase tracking-[0.22em] text-cyan-300">
             <tr>
@@ -330,16 +330,13 @@ export function AdminServicesCrud({ initial, isAr }: Props) {
                 <td className="px-5 py-3 text-left">
                   <p className="font-medium text-white">{r.title_en}</p>
                   {r.title_ar && (
-                    <p
-                      className="text-xs text-slate-400 mt-0.5 text-left"
-                      dir="rtl"
-                    >
+                    <p className="text-xs text-slate-400 mt-0.5" dir="rtl">
                       {r.title_ar}
                     </p>
                   )}
                 </td>
                 <td className="px-5 py-3">
-                  <div className="flex gap-2 justify-end">
+                  <div className="flex gap-2 justify-end whitespace-nowrap">
                     <button
                       type="button"
                       onClick={() => {
