@@ -236,20 +236,6 @@ export default function AdminTeamPage() {
                 dir="rtl"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs text-slate-500">
-                {isAr ? "الترتيب" : "Order"}
-              </label>
-              <input
-                type="number"
-                className={inputCls}
-                value={form.order}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, order: Number(e.target.value) }))
-                }
-                placeholder="0"
-              />
-            </div>
           </div>
 
           <div>

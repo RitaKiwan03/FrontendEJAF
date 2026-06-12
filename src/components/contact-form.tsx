@@ -138,7 +138,7 @@ export function ContactForm({
         />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2" dir="ltr">
         <select
           value={phoneCode}
           onChange={(e) => setPhoneCode(e.target.value)}
@@ -154,10 +154,9 @@ export function ContactForm({
           type="tel"
           name="phone"
           autoComplete="tel"
+          dir="ltr"
           className={`${inputCls} flex-1`}
-          placeholder={
-            isAr ? "رقم الهاتف (اختياري)" : "Phone number (optional)"
-          }
+          placeholder="Phone number (optional)"
         />
       </div>
 

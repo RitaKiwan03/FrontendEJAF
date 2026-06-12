@@ -199,13 +199,13 @@ function LoginForm() {
                       e.key === "Enter" &&
                       (e.preventDefault(), handleCaptchaCheck())
                     }
-                    className="flex-1 rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-2 text-white outline-none focus:border-cyan-300/40"
+                    className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-2 text-white outline-none focus:border-cyan-300/40"
                     placeholder={isAr ? "الإجابة" : "Answer"}
                   />
                   <button
                     type="button"
                     onClick={handleCaptchaCheck}
-                    className="rounded-2xl bg-cyan-400/15 px-4 py-2 text-sm text-cyan-300 hover:bg-cyan-400/25 transition-colors"
+                    className="shrink-0 rounded-2xl bg-cyan-400/15 px-4 py-2 text-sm text-cyan-300 hover:bg-cyan-400/25 transition-colors"
                   >
                     {isAr ? "تحقق" : "Verify"}
                   </button>
