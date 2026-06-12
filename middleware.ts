@@ -2,23 +2,27 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get("ejaf_token");
   const { pathname } = request.nextUrl;
 
-  // 1. تعريف الصفحات العامة
-  const isLoginPage = pathname === "/admin/login";
-
-  // 2. التحقق من وجود التوكن
-  const hasToken = !!token?.value;
-
-  // 3. إذا كان المستخدم لا يملك توكن ويحاول دخول أي صفحة admin غير الـ login
-  if (!hasToken && !isLoginPage) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+  // ✅ تجاهل صفحة Login وReset Password
+  if (
+    pathname === "/admin/login" ||
+    pathname.startsWith("/admin/reset-password")
+  ) {
+    return NextResponse.next();
   }
 
-  // 4. إذا كان المستخدم يملك توكن ويحاول دخول صفحة الـ login، وجهه للداشبورد
-  if (hasToken && isLoginPage) {
-    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+  // ✅ التحقق من الـ token بطرق متعددة
+  const cookieToken = request.cookies.get("ejaf_token")?.value;
+  const authHeader = request.headers.get("authorization");
+
+  const hasToken = !!cookieToken || !!authHeader;
+
+  // ✅ إذا لا يوجد token - أعد التوجيه لـ Login
+  if (!hasToken) {
+    const loginUrl = new URL("/admin/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
