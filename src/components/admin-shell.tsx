@@ -65,6 +65,12 @@ const navItems = [
     labelAr: "الإعدادات",
     icon: Settings,
   },
+  {
+    href: "/admin/team",
+    labelEn: "Team",
+    labelAr: "الفريق",
+    icon: Users,
+  },
 ];
 
 type AdminShellProps = {
