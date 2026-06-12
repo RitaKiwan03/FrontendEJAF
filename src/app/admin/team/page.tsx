@@ -324,9 +324,6 @@ export default function AdminTeamPage() {
                   <th className="px-5 py-3 text-left hidden md:table-cell">
                     {isAr ? "المسمى" : "Role"}
                   </th>
-                  <th className="px-5 py-3 text-left hidden md:table-cell">
-                    {isAr ? "الصف" : "Row"}
-                  </th>
                   <th className="px-5 py-3 text-right">
                     {isAr ? "إجراءات" : "Actions"}
                   </th>
