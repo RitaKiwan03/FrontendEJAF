@@ -356,11 +356,6 @@ export default function AdminTeamPage() {
                       <td className="px-5 py-3 text-slate-400 hidden md:table-cell">
                         {m.role_en}
                       </td>
-                      <td className="px-5 py-3 hidden md:table-cell">
-                        <span className="rounded-full bg-cyan-400/10 border border-cyan-400/20 px-2 py-0.5 text-xs text-cyan-300">
-                          Row {m.row}
-                        </span>
-                      </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-2">
                           <button
