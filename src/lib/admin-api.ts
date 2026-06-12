@@ -47,11 +47,9 @@ export async function loginAdmin(
   localStorage.setItem("ejaf_token", data.token);
   localStorage.setItem("ejaf_user", JSON.stringify(data.user));
 
-  // ✅ Secure في production
-  document.cookie = `ejaf_token=${data.token}; path=/; max-age=86400; SameSite=Strict${
+  document.cookie = `ejaf_token=${data.token}; path=/; max-age=86400; SameSite=Lax${
     location.protocol === "https:" ? "; Secure" : ""
   }`;
-
   return data;
 }
 
