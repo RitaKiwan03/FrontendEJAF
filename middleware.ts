@@ -4,20 +4,17 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ✅ الصفحات العامة - لا تحتاج token
   const publicPaths = ["/admin/login", "/admin/reset-password"];
-
   const isPublic = publicPaths.some((path) => pathname.startsWith(path));
-
   if (isPublic) return NextResponse.next();
 
-  // ✅ التحقق من الـ token
+  // تحقق من الـ cookie أو الـ header
   const cookieToken = request.cookies.get("ejaf_token")?.value;
-  const hasToken = !!cookieToken;
 
-  // ✅ إذا لا يوجد token - أعد التوجيه لـ Login
-  if (!hasToken) {
+  if (!cookieToken) {
     const loginUrl = new URL("/admin/login", request.url);
+    const lang = request.nextUrl.searchParams.get("lang");
+    if (lang) loginUrl.searchParams.set("lang", lang);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
