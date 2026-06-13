@@ -84,7 +84,7 @@ export function PartnersMarquee({ locale = "en" }: Props) {
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4" dir="ltr">
           <MarqueeRow partners={ROW1} />
           <MarqueeRow partners={ROW2} reverse />
           <MarqueeRow partners={ROW3} />
