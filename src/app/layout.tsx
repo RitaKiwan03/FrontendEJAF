@@ -6,7 +6,6 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { LocaleSync } from "@/components/locale-sync";
 import { SiteMotion } from "@/components/site-motion";
-import { VisitorTracker } from "@/components/visitor-tracker";
 import { SmoothScroll } from "@/components/smooth-scroll";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -70,7 +69,7 @@ export default async function RootLayout({
       >
         <Suspense fallback={null}>
           <LocaleSync />
-          <VisitorTracker />
+          {/* <VisitorTracker /> */}
           <SmoothScroll>
             {/* <SiteMotion> */}
               <div className="flex min-h-screen flex-col">
