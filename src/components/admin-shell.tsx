@@ -14,11 +14,9 @@ import {
   MapPin,
   Mail,
   Users,
-  Radio,
 } from "lucide-react";
 
 import { createLocalizedHref, resolveLocale } from "@/lib/i18n";
-import { getVisitorStatsApi } from "@/lib/api";
 import { useEffect, useState } from "react";
 
 const navItems = [
@@ -78,8 +76,6 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
   const searchParams = useSearchParams();
   const locale = resolveLocale(searchParams.get("lang"));
   const router = useRouter();
-  const [online, setOnline] = useState<number>(0);
-
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -97,16 +93,6 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
 
     setIsLoading(false);
   }, [pathname, router]);
-
-  useEffect(() => {
-    async function fetchOnline() {
-      const stats = await getVisitorStatsApi().catch(() => null);
-      if (stats) setOnline(stats.online);
-    }
-    fetchOnline();
-    const interval = setInterval(fetchOnline, 30000);
-    return () => clearInterval(interval);
-  }, []);
 
   function handleLogout(e: React.MouseEvent) {
     e.preventDefault();
@@ -166,26 +152,6 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
             </button>
           </div>
         </nav>
-
-        {/* Online Now Card */}
-        <div className="rounded-[1.75rem] border border-green-400/15 bg-green-400/[0.04] p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Radio className="h-4 w-4 text-green-300" strokeWidth={1.8} />
-              <p className="text-xs font-semibold text-green-300">
-                {locale === "ar" ? "متصلون الآن" : "Online Now"}
-              </p>
-            </div>
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
-            </span>
-          </div>
-          <p className="mt-3 text-3xl font-semibold text-white">{online}</p>
-          <p className="mt-1 text-xs text-slate-400">
-            {locale === "ar" ? "آخر 5 دقائق" : "Active last 5 min"}
-          </p>
-        </div>
       </aside>
 
       <main className="min-w-0 space-y-6">

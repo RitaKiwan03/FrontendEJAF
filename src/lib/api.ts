@@ -54,7 +54,7 @@ export async function getMessagesApi(): Promise<any[]> {
           localStorage.getItem("admin_token")
         : null;
 
-    const response = await fetch(`${API_URL}/api/messages`, {
+    const response = await fetch(`${API_URL}/api/contact`, {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
