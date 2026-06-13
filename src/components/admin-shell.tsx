@@ -54,12 +54,6 @@ const navItems = [
     icon: MapPin,
   },
   {
-    href: "/admin/visitors",
-    labelEn: "Visitors",
-    labelAr: "الزوار",
-    icon: Users,
-  },
-  {
     href: "/admin/settings",
     labelEn: "Settings",
     labelAr: "الإعدادات",

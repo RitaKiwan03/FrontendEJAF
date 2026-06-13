@@ -38,6 +38,7 @@ export default function AdminDashboardPage() {
     projects: 0,
     posts: 0,
     messages: 0,
+    unreadMessages: 0,
     locations: 0,
   });
 
@@ -59,11 +60,16 @@ export default function AdminDashboardPage() {
             getLocationsApi().catch(() => []),
           ]);
 
+        const unread = Array.isArray(messages)
+          ? messages.filter((m: any) => !m.read_at).length
+          : 0;
+
         setCounts({
           services: services?.length || 0,
           projects: projects?.length || 0,
           posts: posts?.length || 0,
           messages: messages?.length || 0,
+          unreadMessages: unread,
           locations: locations?.length || 0,
         });
       } catch {
@@ -91,6 +97,7 @@ export default function AdminDashboardPage() {
   const sections = [
     {
       icon: Layers,
+      unread: 0,
       count: counts.services,
       label: isAr ? "الخدمات" : "Services",
       desc: isAr ? "إدارة سجلات الخدمات" : "Manage service records",
@@ -101,6 +108,7 @@ export default function AdminDashboardPage() {
     },
     {
       icon: FolderKanban,
+      unread: 0,
       count: counts.projects,
       label: isAr ? "المشاريع" : "Projects",
       desc: isAr ? "إدارة دراسات الحالة" : "Manage case studies",
@@ -111,6 +119,7 @@ export default function AdminDashboardPage() {
     },
     {
       icon: BookOpen,
+      unread: 0,
       count: counts.posts,
       label: isAr ? "المدونة" : "Blog",
       desc: isAr ? "كتابة وتحرير المقالات" : "Write and edit articles",
@@ -122,6 +131,7 @@ export default function AdminDashboardPage() {
     {
       icon: Mail,
       count: counts.messages,
+      unread: counts.unreadMessages,
       label: isAr ? "الرسائل" : "Messages",
       desc: isAr ? "عرض رسائل التواصل" : "View contact messages",
       href: "/admin/messages",
@@ -131,6 +141,7 @@ export default function AdminDashboardPage() {
     },
     {
       icon: MapPin,
+      unread: 0,
       count: counts.locations,
       label: isAr ? "المواقع" : "Locations",
       desc: isAr ? "إدارة المواقع الجغرافية" : "Manage office locations",
@@ -138,16 +149,6 @@ export default function AdminDashboardPage() {
       color: "text-amber-300",
       ring: "ring-amber-400/20",
       bg: "bg-amber-400/10",
-    },
-    {
-      icon: Users,
-      count: null,
-      label: isAr ? "الزوار" : "Visitors",
-      desc: isAr ? "إحصائيات زوار الموقع" : "Site visitor statistics",
-      href: "/admin/visitors",
-      color: "text-sky-300",
-      ring: "ring-sky-400/20",
-      bg: "bg-sky-400/10",
     },
   ];
 
@@ -165,18 +166,36 @@ export default function AdminDashboardPage() {
       {/* Content Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {sections.map(
-          ({ icon: Icon, count, label, desc, href, color, ring, bg }) => (
+          ({
+            icon: Icon,
+            count,
+            unread,
+            label,
+            desc,
+            href,
+            color,
+            ring,
+            bg,
+          }) => (
             <Link
               key={href}
               href={lang ? `${href}?lang=${lang}` : href}
               className="group rounded-[1.75rem] border border-white/10 bg-white/[0.05] p-6 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08] hover:-translate-y-0.5"
             >
               <div className="flex items-start justify-between">
-                <span
-                  className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ring-1 ${bg} ${ring}`}
-                >
-                  <Icon className={`h-5 w-5 ${color}`} strokeWidth={1.8} />
-                </span>
+                <div className="relative">
+                  <span
+                    className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ring-1 ${bg} ${ring}`}
+                  >
+                    <Icon className={`h-5 w-5 ${color}`} strokeWidth={1.8} />
+                  </span>
+                  {/* ✅ Badge رسائل غير مقروءة */}
+                  {unread > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
+                      {unread}
+                    </span>
+                  )}
+                </div>
                 <ArrowUpRight className="h-4 w-4 text-slate-600 transition-colors group-hover:text-white" />
               </div>
               {count !== null ? (
