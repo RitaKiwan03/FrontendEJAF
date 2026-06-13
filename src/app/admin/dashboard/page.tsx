@@ -19,9 +19,9 @@ import {
   getBlogApi,
   getProjectsApi,
   getServicesApi,
-  getMessagesApi,
   getLocationsApi,
 } from "@/lib/api";
+import { getContactMessages } from "@/lib/admin-api";
 import { resolveLocale } from "@/lib/i18n";
 import { isLoggedIn } from "@/lib/admin-api";
 
@@ -56,7 +56,7 @@ export default function AdminDashboardPage() {
             getServicesApi(locale).catch(() => []),
             getProjectsApi(locale).catch(() => []),
             getBlogApi(locale).catch(() => []),
-            getMessagesApi().catch(() => []),
+            getContactMessages(isAr).catch(() => []),
             getLocationsApi().catch(() => []),
           ]);
 
