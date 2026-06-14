@@ -1,5 +1,9 @@
 @import "leaflet/dist/leaflet.css";
-@import url("https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700;900&family=Inter:wght@400;500;600;700;800;900&display=swap");
+/* ✅ خطوط جديدة:
+   - Sora: خط عناوين إنجليزي مميز (هوية تقنية/هندسية)
+   - IBM Plex Sans Arabic: خط عربي حديث بديل لـ Noto Kufi Arabic
+   - Inter: يبقى للنصوص الإنجليزية العادية */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -98,11 +102,43 @@ body::after {
   z-index: 0;
 }
 
+/* ============================================================
+   ✅ خطوط العناوين (Display Font)
+   - إنجليزي: Sora — هوية تقنية مميزة، تختلف عن جسم النص
+   - عربي: IBM Plex Sans Arabic بخط ثقيل
+   ============================================================ */
+h1,
+h2,
+h3 {
+  font-family: "Sora", "Inter", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
 html[dir="rtl"] body {
-  font-family: "Noto Kufi Arabic", "Segoe UI", Tahoma, sans-serif;
+  font-family: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
   font-size: 16px;
-  line-height: 2;
+  line-height: 1.9;
   letter-spacing: 0;
+}
+
+/* ✅ عناوين عربية: خط مختلف عن Kufi + line-height يمنع تلاصق الأسطر
+   (Tailwind's text-* utilities تضبط line-height:1 وتتجاوز إعداد body،
+   لذلك نضبطها هنا بشكل صريح على مستوى العنصر h1/h2/h3) */
+html[dir="rtl"] h1,
+html[dir="rtl"] h2,
+html[dir="rtl"] h3 {
+  font-family: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.6;
+}
+
+/* ✅ العنوان الرئيسي (Hero) بالعربية: حجم متجاوب يمنع التكسّر
+   لعدد كبير من الأسطر الذي يسبب التلاصق مع العناصر التالية.
+   النسخة الإنجليزية غير متأثرة (تبقى أحجام Tailwind كما هي). */
+html[dir="rtl"] .hero-title {
+  font-size: clamp(1.85rem, 1.1rem + 3.2vw, 3.5rem);
+  line-height: 1.55;
 }
 
 html[dir="rtl"] [class*="tracking-["] {

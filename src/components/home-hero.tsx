@@ -38,7 +38,7 @@ export function HomeHero({ locale }: HomeHeroProps) {
 
             <Reveal delay={0.08}>
               <div className="space-y-5">
-                <h1 className="text-4xl font-semibold tracking-tight text-white text-balance sm:text-5xl md:text-6xl lg:text-7xl">
+                <h1 className="hero-title text-4xl font-semibold tracking-tight text-white text-balance sm:text-5xl md:text-6xl lg:text-7xl">
                   {copy.hero.title}
                 </h1>
                 <p className="max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
