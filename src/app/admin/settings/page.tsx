@@ -467,7 +467,7 @@ export default function AdminSettingsPage({ searchParams }: Props) {
                   {isAr ? "إضافة رابط" : "Add Link"}
                 </button>
               ) : (
-                /* نموذج الإضافة - أفقي على الموبايل */
+                /* نموذج الإضافة */
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-white">
@@ -487,44 +487,39 @@ export default function AdminSettingsPage({ searchParams }: Props) {
                     </button>
                   </div>
 
-                  {/* ✅ الصف الأفقي - يبقى أفقي على الموبايل */}
-                  <div className="flex flex-nowrap gap-2">
-                    {/* اختيار المنصة - صغير على الموبايل */}
-                    <div className="relative shrink-0 w-28 sm:w-32">
+                  {/* ✅ التعديل الوحيد: من flex gap-2 إلى flex flex-col sm:flex-row gap-2 */}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    {/* اختيار المنصة */}
+                    <div className="relative w-full sm:w-auto">
                       <button
                         type="button"
                         onClick={() =>
                           setShowPlatformDropdown(!showPlatformDropdown)
                         }
-                        className="flex items-center gap-1 sm:gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2 sm:px-3 sm:py-2.5 text-xs sm:text-sm text-white hover:bg-white/[0.08] transition-colors w-full justify-between"
+                        className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white hover:bg-white/[0.08] transition-colors w-full sm:min-w-[140px] justify-between"
                       >
                         {selectedPlatform ? (
-                          <div className="flex items-center gap-1 sm:gap-2 truncate">
+                          <div className="flex items-center gap-2">
                             {SocialIconSVG[selectedPlatform]}
-                            <span className="hidden sm:inline">
+                            <span>
                               {
                                 SOCIAL_PLATFORMS.find(
                                   (p) => p.key === selectedPlatform,
                                 )?.label
                               }
                             </span>
-                            <span className="sm:hidden text-[10px]">
-                              {SOCIAL_PLATFORMS.find(
-                                (p) => p.key === selectedPlatform,
-                              )?.label.substring(0, 3)}
-                            </span>
                           </div>
                         ) : (
-                          <span className="text-slate-500 text-[10px] sm:text-sm">
-                            {isAr ? "منصة" : "Platform"}
+                          <span className="text-slate-500">
+                            {isAr ? "اختر المنصة" : "Select Platform"}
                           </span>
                         )}
-                        <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 text-slate-500 shrink-0" />
+                        <ChevronDown className="h-4 w-4 text-slate-500 shrink-0" />
                       </button>
 
                       {/* القائمة المنسدلة */}
                       {showPlatformDropdown && (
-                        <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-xl border border-white/10 bg-[#181c27] shadow-xl">
+                        <div className="absolute top-full left-0 right-0 sm:right-auto mt-1 z-50 rounded-xl border border-white/10 bg-[#181c27] shadow-xl">
                           <div className="max-h-64 overflow-auto py-1">
                             {SOCIAL_PLATFORMS.map((platform) => (
                               <button
@@ -552,16 +547,16 @@ export default function AdminSettingsPage({ searchParams }: Props) {
                       )}
                     </div>
 
-                    {/* حقل الرابط - يأخذ المساحة المتبقية */}
+                    {/* حقل الرابط */}
                     <input
                       type="url"
                       value={newSocialUrl}
                       onChange={(e) => setNewSocialUrl(e.target.value)}
                       placeholder="https://..."
-                      className="flex-1 min-w-0 rounded-xl border border-white/10 bg-white/[0.04] px-2 sm:px-3 py-2 text-xs sm:text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/40 dir-ltr"
+                      className="flex-1 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/40 dir-ltr"
                     />
 
-                    {/* زر الإضافة - أيقونة فقط على الموبايل */}
+                    {/* زر الإضافة */}
                     <button
                       type="button"
                       onClick={() => {
@@ -576,10 +571,10 @@ export default function AdminSettingsPage({ searchParams }: Props) {
                         }
                       }}
                       disabled={!selectedPlatform || !newSocialUrl}
-                      className="shrink-0 rounded-xl bg-cyan-400/15 px-3 sm:px-4 py-2 text-xs sm:text-sm text-cyan-300 hover:bg-cyan-400/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-2"
+                      className="rounded-xl bg-cyan-400/15 px-4 py-2.5 text-sm text-cyan-300 hover:bg-cyan-400/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto flex items-center justify-center gap-2"
                     >
-                      <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline">
+                      <Plus className="h-4 w-4" />
+                      <span className="sm:hidden">
                         {isAr ? "إضافة" : "Add"}
                       </span>
                     </button>
