@@ -47,12 +47,28 @@ async function handleResponse(res: Response, errorMsg: string) {
 
 // ==================== AUTH ====================
 
-// ✅ loginAdmin مع CAPTCHA server-side
+/**
+ * ✅ يجلب سؤال CAPTCHA من السيرفر (الإجابة الصحيحة لا تُرسَل للمتصفح)
+ * يُستخدم captcha_id مرة واحدة فقط مع طلب تسجيل الدخول
+ */
+export async function getCaptcha(): Promise<{
+  captcha_id: string;
+  question: string;
+}> {
+  const res = await fetch(`${API_URL}/api/auth/captcha`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error("Failed to load captcha");
+  }
+  return res.json();
+}
+
 export async function loginAdmin(
   username: string,
   password: string,
   captchaId: string,
-  captchaAnswer: number,
+  captchaAnswer: string,
   isAr = false,
 ) {
   const res = await fetch(`${API_URL}/api/auth/login`, {
@@ -65,9 +81,7 @@ export async function loginAdmin(
       captcha_answer: captchaAnswer,
     }),
   });
-
   const data = await res.json();
-
   if (!res.ok)
     throw new Error(
       data.message || t("فشل تسجيل الدخول", "Login failed", isAr),
