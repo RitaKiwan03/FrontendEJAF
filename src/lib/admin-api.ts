@@ -46,17 +46,28 @@ async function handleResponse(res: Response, errorMsg: string) {
 }
 
 // ==================== AUTH ====================
+
+// ✅ loginAdmin مع CAPTCHA server-side
 export async function loginAdmin(
   username: string,
   password: string,
+  captchaId: string,
+  captchaAnswer: number,
   isAr = false,
 ) {
   const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({
+      username,
+      password,
+      captcha_id: captchaId,
+      captcha_answer: captchaAnswer,
+    }),
   });
+
   const data = await res.json();
+
   if (!res.ok)
     throw new Error(
       data.message || t("فشل تسجيل الدخول", "Login failed", isAr),

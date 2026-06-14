@@ -1,36 +1,19 @@
 "use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { loginAdmin } from "@/lib/admin-api";
-import Link from "next/dist/client/link";
-import { Shield, Eye, EyeOff, CheckCircle } from "lucide-react";
+import Link from "next/link";
+import { Shield, Eye, EyeOff, CheckCircle, RefreshCw } from "lucide-react";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 function sanitizeInput(input: string): string {
-  return input
-    .replace(/[<>'"`;]/g, "")
-    .replace(
-      /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|EXEC|SCRIPT)\b)/gi,
-      "",
-    )
-    .trim();
+  return input.replace(/[<>'"`;]/g, "").trim();
 }
 
 function isValidUsername(username: string): boolean {
   return /^[a-z0-9_]+$/.test(username);
-}
-
-function generateMath() {
-  const a = Math.floor(Math.random() * 9) + 1;
-  const b = Math.floor(Math.random() * 9) + 1;
-  const ops = ["+", "-", "*"] as const;
-  const op = ops[Math.floor(Math.random() * ops.length)];
-  let answer: number;
-  if (op === "+") answer = a + b;
-  else if (op === "-") answer = a - b;
-  else answer = a * b;
-  return { question: `${a} ${op} ${b}`, answer };
 }
 
 function LoginForm() {
@@ -42,36 +25,38 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [captchaVerified, setCaptchaVerified] = useState(false);
+
+  // ✅ CAPTCHA من الـ server
+  const [captchaId, setCaptchaId] = useState("");
+  const [captchaQuestion, setCaptchaQuestion] = useState("");
   const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [captchaError, setCaptchaError] = useState("");
-  const [math, setMath] = useState(generateMath);
+  const [captchaLoading, setCaptchaLoading] = useState(true);
 
-  function handleCaptchaCheck() {
-    const userAnswer = parseInt(captchaAnswer.trim());
-    if (userAnswer === math.answer) {
-      setCaptchaVerified(true);
-      setCaptchaError("");
-    } else {
-      setCaptchaError(
-        isAr ? "إجابة خاطئة، حاول مرة أخرى" : "Wrong answer, try again",
-      );
-      setMath(generateMath());
-      setCaptchaAnswer("");
+  // ✅ جلب CAPTCHA من الـ server
+  async function fetchCaptcha() {
+    setCaptchaLoading(true);
+    setCaptchaError("");
+    setCaptchaAnswer("");
+    try {
+      const res = await fetch(`${API_URL}/api/auth/captcha`);
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      setCaptchaId(data.captcha_id);
+      setCaptchaQuestion(data.question);
+    } catch {
+      setCaptchaError(isAr ? "فشل تحميل التحقق" : "Failed to load captcha");
+    } finally {
+      setCaptchaLoading(false);
     }
   }
 
+  useEffect(() => {
+    fetchCaptcha();
+  }, []);
+
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
-    if (!captchaVerified) {
-      setError(
-        isAr ? "يرجى إكمال التحقق أولاً" : "Please complete verification first",
-      );
-      return;
-    }
-
-    setLoading(true);
     setError("");
 
     const form = e.currentTarget;
@@ -79,32 +64,33 @@ function LoginForm() {
       .value;
     const rawPass = (form.elements.namedItem("password") as HTMLInputElement)
       .value;
-
     const username = sanitizeInput(rawUser);
     const password = sanitizeInput(rawPass);
 
     if (!isValidUsername(username)) {
-      setError(
-        isAr
-          ? "اسم المستخدم يجب أن يكون بحروف صغيرة فقط"
-          : "Username must be lowercase only",
-      );
-      setLoading(false);
+      setError(isAr ? "اسم المستخدم غير صالح" : "Invalid username format");
       return;
     }
 
-    try {
-      await loginAdmin(username, password);
-      router.push(lang ? `/admin/dashboard?lang=${lang}` : "/admin/dashboard");
-    } catch {
+    if (!captchaId || !captchaAnswer) {
       setError(
-        isAr
-          ? "اسم المستخدم أو كلمة المرور غير صحيحة"
-          : "Invalid username or password",
+        isAr ? "يرجى إكمال التحقق أولاً" : "Please complete verification first",
       );
-      setCaptchaVerified(false);
-      setMath(generateMath());
-      setCaptchaAnswer("");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await loginAdmin(username, password, captchaId, parseInt(captchaAnswer));
+      router.push(lang ? `/admin/dashboard?lang=${lang}` : "/admin/dashboard");
+    } catch (err: any) {
+      setError(
+        err.message ||
+          (isAr ? "بيانات الدخول غير صحيحة" : "Invalid credentials"),
+      );
+      // ✅ جلب CAPTCHA جديد عند الفشل
+      await fetchCaptcha();
     } finally {
       setLoading(false);
     }
@@ -129,18 +115,25 @@ function LoginForm() {
           </p>
         )}
 
-        <form onSubmit={handleLogin} className="mt-8 space-y-4">
+        {/* ✅ method POST + autoComplete off */}
+        <form
+          onSubmit={handleLogin}
+          method="post"
+          autoComplete="off"
+          className="mt-8 space-y-4"
+        >
+          {/* ✅ بدون placeholder لمنع تلميح اسم المستخدم */}
           <label className="block space-y-1.5 text-sm text-slate-300">
             <span>{isAr ? "اسم المستخدم" : "Username"}</span>
             <input
               type="text"
               name="username"
-              autoComplete="username"
+              autoComplete="off"
               required
               onChange={(e) => {
                 e.target.value = e.target.value.toLowerCase();
               }}
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/40 focus:ring-1 focus:ring-cyan-300/20"
+              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none focus:border-cyan-300/40 focus:ring-1 focus:ring-cyan-300/20"
             />
           </label>
 
@@ -150,9 +143,9 @@ function LoginForm() {
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 pr-12 text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/40 focus:ring-1 focus:ring-cyan-300/20"
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 pr-12 text-white outline-none focus:border-cyan-300/40 focus:ring-1 focus:ring-cyan-300/20"
                 placeholder="••••••••"
               />
               <button
@@ -169,26 +162,36 @@ function LoginForm() {
             </div>
           </label>
 
-          {/* CAPTCHA */}
+          {/* ✅ CAPTCHA من الـ server */}
           <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4 space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300 flex items-center gap-2">
               <Shield className="h-3.5 w-3.5" />
               {isAr ? "التحقق البشري" : "Human Verification"}
             </p>
 
-            {captchaVerified ? (
-              <div className="flex items-center gap-2 text-emerald-300 text-sm">
-                <CheckCircle className="h-4 w-4" />
-                {isAr ? "تم التحقق ✓" : "Verified ✓"}
+            {captchaLoading ? (
+              <div className="flex items-center gap-2 text-slate-400 text-sm">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                {isAr ? "جاري التحميل..." : "Loading..."}
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm text-slate-300">
-                  {isAr ? "احسب: " : "Calculate: "}
-                  <span className="font-bold text-white text-lg mx-2">
-                    {math.question} = ?
-                  </span>
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-slate-300">
+                    {isAr ? "احسب: " : "Calculate: "}
+                    <span className="font-bold text-white text-lg mx-2">
+                      {captchaQuestion} = ?
+                    </span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={fetchCaptcha}
+                    className="text-slate-500 hover:text-cyan-300 transition-colors"
+                    title={isAr ? "تحديث" : "Refresh"}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </button>
+                </div>
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -196,18 +199,11 @@ function LoginForm() {
                     onChange={(e) => setCaptchaAnswer(e.target.value)}
                     onKeyDown={(e) =>
                       e.key === "Enter" &&
-                      (e.preventDefault(), handleCaptchaCheck())
+                      (e.preventDefault(), handleLogin(e as any))
                     }
                     className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-2 text-white outline-none focus:border-cyan-300/40"
                     placeholder={isAr ? "الإجابة" : "Answer"}
                   />
-                  <button
-                    type="button"
-                    onClick={handleCaptchaCheck}
-                    className="shrink-0 rounded-2xl bg-cyan-400/15 px-4 py-2 text-sm text-cyan-300 hover:bg-cyan-400/25 transition-colors"
-                  >
-                    {isAr ? "تحقق" : "Verify"}
-                  </button>
                 </div>
                 {captchaError && (
                   <p className="text-xs text-rose-300">{captchaError}</p>
@@ -229,7 +225,7 @@ function LoginForm() {
 
           <button
             type="submit"
-            disabled={loading || !captchaVerified}
+            disabled={loading || captchaLoading || !captchaId}
             className="mt-2 w-full rounded-full bg-white py-3 text-sm font-semibold text-slate-950 transition-transform hover:-translate-y-0.5 hover:bg-cyan-50 disabled:opacity-60"
           >
             {loading
