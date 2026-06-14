@@ -44,7 +44,12 @@ body {
       transparent 35%
     ),
     linear-gradient(180deg, #000d24 0%, #000510 40%, #000000 100%);
-  font-family: "Inter", var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    Arial,
+    sans-serif;
   margin: 0;
   min-height: 100vh;
   text-rendering: optimizeLegibility;
@@ -94,12 +99,10 @@ body::after {
 }
 
 html[dir="rtl"] body {
-  direction: rtl;
-  font-family: "Noto Kufi Arabic", "Segoe UI", "Tahoma", sans-serif;
+  font-family: "Noto Kufi Arabic", "Segoe UI", Tahoma, sans-serif;
   font-size: 16px;
-  line-height: 1.8;
+  line-height: 2;
   letter-spacing: 0;
-  word-spacing: 0.05em;
 }
 
 html[dir="rtl"] [class*="tracking-["] {
