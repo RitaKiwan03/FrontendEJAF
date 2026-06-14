@@ -1,5 +1,5 @@
 @import "leaflet/dist/leaflet.css";
-@import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;700;900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700;900&family=Inter:wght@400;500;600;700;800;900&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -10,11 +10,11 @@
   --background: #000510;
   --foreground: #e2e8f0;
   --surface: rgba(0, 13, 36, 0.72);
-  --brand-blue: #00318C;
-  --brand-cyan: #66FFFF;
-  --brand-yellow: #FDF156;
-  --brand-chartreuse: #CCFF33;
-  --brand-carolina: #7BAFDE;
+  --brand-blue: #00318c;
+  --brand-cyan: #66ffff;
+  --brand-yellow: #fdf156;
+  --brand-chartreuse: #ccff33;
+  --brand-carolina: #7bafde;
 }
 
 * {
@@ -28,16 +28,31 @@ html {
 body {
   color: var(--foreground);
   background:
-    radial-gradient(circle at 20% 10%, rgba(0, 49, 140, 0.25) 0%, transparent 35%),
-    radial-gradient(circle at 80% 15%, rgba(102, 255, 255, 0.08) 0%, transparent 28%),
-    radial-gradient(circle at 50% 80%, rgba(0, 49, 140, 0.15) 0%, transparent 35%),
+    radial-gradient(
+      circle at 20% 10%,
+      rgba(0, 49, 140, 0.25) 0%,
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 80% 15%,
+      rgba(102, 255, 255, 0.08) 0%,
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 50% 80%,
+      rgba(0, 49, 140, 0.15) 0%,
+      transparent 35%
+    ),
     linear-gradient(180deg, #000d24 0%, #000510 40%, #000000 100%);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: "Inter", var(--font-geist-sans), Arial, Helvetica, sans-serif;
   margin: 0;
   min-height: 100vh;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 /* ✅ Grid overlay - أدق وأجمل */
@@ -51,7 +66,11 @@ body::before {
     linear-gradient(90deg, rgba(102, 255, 255, 0.025) 1px, transparent 1px);
   background-size: 80px 80px;
   mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
-  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    black 30%,
+    transparent 80%
+  );
   opacity: 0.6;
   z-index: 0;
 }
@@ -65,14 +84,22 @@ body::after {
   transform: translateX(-50%);
   width: 800px;
   height: 400px;
-  background: radial-gradient(ellipse, rgba(0, 49, 140, 0.3) 0%, transparent 70%);
+  background: radial-gradient(
+    ellipse,
+    rgba(0, 49, 140, 0.3) 0%,
+    transparent 70%
+  );
   pointer-events: none;
   z-index: 0;
 }
 
 html[dir="rtl"] body {
   direction: rtl;
-  font-family: "Noto Kufi Arabic", "Segoe UI", "Tahoma", var(--font-geist-sans), sans-serif;
+  font-family: "Noto Kufi Arabic", "Segoe UI", "Tahoma", sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
+  letter-spacing: 0;
+  word-spacing: 0.05em;
 }
 
 html[dir="rtl"] [class*="tracking-["] {
@@ -89,7 +116,11 @@ html[dir="rtl"] .flex-row-rtl {
   flex-direction: row-reverse;
 }
 
-a, button, input, textarea, select {
+a,
+button,
+input,
+textarea,
+select {
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -98,8 +129,12 @@ a, button, input, textarea, select {
   color: #f8fafc;
 }
 
-button, a, input, textarea {
-  transition-property: transform, color, background-color, border-color, box-shadow, opacity;
+button,
+a,
+input,
+textarea {
+  transition-property:
+    transform, color, background-color, border-color, box-shadow, opacity;
   transition-duration: 200ms;
   transition-timing-function: ease-out;
 }
@@ -110,15 +145,24 @@ button, a, input, textarea {
 }
 
 /* ✅ Scrollbar بألوان البراند */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: rgba(0, 5, 16, 0.95); }
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 5, 16, 0.95);
+}
 ::-webkit-scrollbar-thumb {
   border-radius: 999px;
   border: 3px solid rgba(0, 5, 16, 0.95);
-  background: linear-gradient(180deg, rgba(0, 49, 140, 0.8), rgba(102, 255, 255, 0.5));
+  background: linear-gradient(
+    180deg,
+    rgba(0, 49, 140, 0.8),
+    rgba(102, 255, 255, 0.5)
+  );
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #00318C, #66FFFF);
+  background: linear-gradient(180deg, #00318c, #66ffff);
 }
 
 /* ✅ Glass panel محسّن */
@@ -131,11 +175,15 @@ button, a, input, textarea {
 
 /* ✅ Brand glow effects */
 .glow-blue {
-  box-shadow: 0 0 40px rgba(0, 49, 140, 0.4), 0 0 80px rgba(0, 49, 140, 0.2);
+  box-shadow:
+    0 0 40px rgba(0, 49, 140, 0.4),
+    0 0 80px rgba(0, 49, 140, 0.2);
 }
 
 .glow-cyan {
-  box-shadow: 0 0 30px rgba(102, 255, 255, 0.2), 0 0 60px rgba(102, 255, 255, 0.1);
+  box-shadow:
+    0 0 30px rgba(102, 255, 255, 0.2),
+    0 0 60px rgba(102, 255, 255, 0.1);
 }
 
 .glow-text-cyan {
@@ -144,14 +192,14 @@ button, a, input, textarea {
 
 /* ✅ Gradient text */
 .text-brand-gradient {
-  background: linear-gradient(135deg, #ffffff 0%, #66FFFF 50%, #7BAFDE 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #66ffff 50%, #7bafde 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .text-blue-gradient {
-  background: linear-gradient(135deg, #7BAFDE 0%, #66FFFF 100%);
+  background: linear-gradient(135deg, #7bafde 0%, #66ffff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -168,9 +216,18 @@ button, a, input, textarea {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(0, 49, 140, 0.8), rgba(102, 255, 255, 0.4), rgba(0, 49, 140, 0.8));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+    135deg,
+    rgba(0, 49, 140, 0.8),
+    rgba(102, 255, 255, 0.4),
+    rgba(0, 49, 140, 0.8)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -185,10 +242,14 @@ button, a, input, textarea {
 .page-enter-active {
   opacity: 1;
   transform: translateY(0);
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s ease;
 }
 
-.text-balance { text-wrap: balance; }
+.text-balance {
+  text-wrap: balance;
+}
 
 /* ✅ GSAP will-change optimization */
 .gsap-animate {
@@ -196,8 +257,12 @@ button, a, input, textarea {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
