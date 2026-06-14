@@ -600,7 +600,7 @@ export default function AdminSettingsPage({ searchParams }: Props) {
                 </>
               ) : saved ? (
                 <>
-                  <Check className="h-4 w-4" />
+                  {/* <Check className="h-4 w-4" /> */}
                   {isAr ? "تم الحفظ ✓" : "Saved ✓"}
                 </>
               ) : isAr ? (
