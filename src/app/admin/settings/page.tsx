@@ -428,8 +428,24 @@ export default function AdminSettingsPage({ searchParams }: Props) {
                         </span>
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={async () => {
+                            // تحديث الـ state فوراً
                             setSocials((prev) => ({ ...prev, [key]: "" }));
+
+                            // الحفظ في الـ Backend
+                            try {
+                              await updateSettings({ [key]: "" }, isAr);
+                            } catch (err: any) {
+                              setError(
+                                err.message ||
+                                  (isAr ? "فشل الحذف" : "Failed to delete"),
+                              );
+                              // استرجاع القيمة في حالة الفشل
+                              setSocials((prev) => ({
+                                ...prev,
+                                [key]: socials[key],
+                              }));
+                            }
                           }}
                           className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 rounded-lg transition-colors"
                         >

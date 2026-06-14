@@ -367,7 +367,6 @@ function ResetPasswordForm() {
               onChange={(e) => setUsername(e.target.value)}
               required
               className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/40"
-              placeholder="admin"
             />
           </label>
 

@@ -141,7 +141,6 @@ function LoginForm() {
                 e.target.value = e.target.value.toLowerCase();
               }}
               className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/40 focus:ring-1 focus:ring-cyan-300/20"
-              placeholder="admin"
             />
           </label>
 
