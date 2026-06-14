@@ -2,18 +2,67 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AdminShell } from "@/components/admin-shell";
-import { Check, Loader2, Upload, X } from "lucide-react";
+import {
+  Check,
+  Loader2,
+  Upload,
+  X,
+  Facebook,
+  Instagram,
+  Twitter,
+  Linkedin,
+  Youtube,
+} from "lucide-react";
 import { getSettings, updateSettings, uploadLogo } from "@/lib/admin-api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 type Props = { searchParams?: { lang?: string } };
 
+const SOCIAL_FIELDS = [
+  {
+    key: "facebook",
+    label: "Facebook",
+    placeholder: "https://facebook.com/ejaftech",
+  },
+  {
+    key: "instagram",
+    label: "Instagram",
+    placeholder: "https://instagram.com/ejaftech",
+  },
+  {
+    key: "twitter",
+    label: "X (Twitter)",
+    placeholder: "https://x.com/ejaftech",
+  },
+  {
+    key: "linkedin",
+    label: "LinkedIn",
+    placeholder: "https://linkedin.com/company/ejaftech",
+  },
+  {
+    key: "whatsapp",
+    label: "WhatsApp",
+    placeholder: "https://wa.me/9647501914252",
+  },
+  {
+    key: "youtube",
+    label: "YouTube",
+    placeholder: "https://youtube.com/@ejaftech",
+  },
+  {
+    key: "tiktok",
+    label: "TikTok",
+    placeholder: "https://tiktok.com/@ejaftech",
+  },
+];
+
 export default function AdminSettingsPage({ searchParams }: Props) {
   const isAr = searchParams?.lang === "ar";
 
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [socials, setSocials] = useState<Record<string, string>>({});
   const [logoUrl, setLogoUrl] = useState("");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [faviconUrl, setFaviconUrl] = useState("");
@@ -36,7 +85,6 @@ export default function AdminSettingsPage({ searchParams }: Props) {
     setLoading(true);
     try {
       const data = await getSettings();
-      // فقط حدّث إذا القيمة موجودة — لا تُصفّر القيم الحالية
       if (data.phone !== undefined) setPhone(data.phone || "");
       if (data.email !== undefined) setEmail(data.email || "");
       if (data.logo_url)
@@ -51,6 +99,13 @@ export default function AdminSettingsPage({ searchParams }: Props) {
             ? data.favicon_url
             : API_URL + data.favicon_url,
         );
+
+      // ✅ جلب Social Media
+      const socialData: Record<string, string> = {};
+      SOCIAL_FIELDS.forEach(({ key }) => {
+        socialData[key] = data[key] || "";
+      });
+      setSocials(socialData);
     } catch {
       setError(isAr ? "فشل جلب الإعدادات" : "Failed to load settings");
     } finally {
@@ -63,10 +118,9 @@ export default function AdminSettingsPage({ searchParams }: Props) {
     setSaving(true);
     setError(null);
     try {
-      await updateSettings({ phone, email }, isAr);
+      await updateSettings({ phone, email, ...socials }, isAr);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-      // أعد جلب الإعدادات بعد الحفظ للتأكد
       await fetchSettings();
     } catch (err: any) {
       setError(err.message);
@@ -78,34 +132,26 @@ export default function AdminSettingsPage({ searchParams }: Props) {
   async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // preview مؤقت أثناء الرفع
     const reader = new FileReader();
     reader.onload = () => setLogoPreview(reader.result as string);
     reader.readAsDataURL(file);
-
     setUploadingLogo(true);
     setError(null);
     try {
       const url = await uploadLogo(file, isAr);
       setLogoUrl(url);
       setLogoPreview(null);
-
-      // إذا ليس GIF — حدّث الـ favicon تلقائياً
       const isGif = file.name.toLowerCase().endsWith(".gif");
       if (!isGif) {
         setFaviconUrl(url);
         updateFaviconInBrowser(url);
       }
-
-      // أعد جلب الإعدادات للتأكد من حفظها
       await fetchSettings();
     } catch (err: any) {
       setError(err.message);
       setLogoPreview(null);
     } finally {
       setUploadingLogo(false);
-      // صفّر الـ input لتمكين رفع نفس الملف مرة أخرى
       if (fileRef.current) fileRef.current.value = "";
     }
   }
@@ -113,43 +159,37 @@ export default function AdminSettingsPage({ searchParams }: Props) {
   async function handleFaviconChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = () => setFaviconPreview(reader.result as string);
     reader.readAsDataURL(file);
-
     setUploadingFavicon(true);
     setError(null);
     try {
       const token = localStorage.getItem("ejaf_token");
       const formData = new FormData();
       formData.append("favicon", file);
-
       const res = await fetch(`${API_URL}/api/settings/favicon`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-
       if (!res.ok)
         throw new Error(
           isAr ? "فشل رفع الـ Favicon" : "Failed to upload favicon",
         );
-
       const data = await res.json();
-      const fullUrl = data.url.startsWith("http") ? data.url : API_URL + data.url;
+      const fullUrl = data.url.startsWith("http")
+        ? data.url
+        : API_URL + data.url;
       setFaviconUrl(fullUrl);
       setFaviconPreview(null);
       updateFaviconInBrowser(fullUrl);
-
-      // أعد جلب الإعدادات للتأكد
       await fetchSettings();
     } catch (err: any) {
       setError(err.message);
       setFaviconPreview(null);
     } finally {
       setUploadingFavicon(false);
-      // صفّر الـ input
       if (faviconRef.current) faviconRef.current.value = "";
     }
   }
@@ -297,8 +337,8 @@ export default function AdminSettingsPage({ searchParams }: Props) {
                   </button>
                   <p className="text-xs text-slate-500">
                     {isAr
-                      ? "PNG, JPG, SVG, ICO — بحد أقصى 1MB (لا يدعم GIF)"
-                      : "PNG, JPG, SVG, ICO — max 1MB (GIF not supported)"}
+                      ? "PNG, JPG, SVG, ICO — بحد أقصى 1MB"
+                      : "PNG, JPG, SVG, ICO — max 1MB"}
                   </p>
                 </div>
               </div>
@@ -342,6 +382,38 @@ export default function AdminSettingsPage({ searchParams }: Props) {
                   dir="ltr"
                 />
               </label>
+            </div>
+
+            {/* ✅ Social Media */}
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.05] p-6 space-y-4">
+              <p className="text-base font-semibold text-white">
+                {isAr ? "وسائل التواصل الاجتماعي" : "Social Media"}
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {SOCIAL_FIELDS.map(({ key, label, placeholder }) => (
+                  <label
+                    key={key}
+                    className="block space-y-1.5 text-sm text-slate-300"
+                  >
+                    <span className="font-mono text-xs text-slate-500">
+                      {label}
+                    </span>
+                    <input
+                      type="url"
+                      value={socials[key] || ""}
+                      onChange={(e) =>
+                        setSocials((prev) => ({
+                          ...prev,
+                          [key]: e.target.value,
+                        }))
+                      }
+                      className={inputCls}
+                      placeholder={placeholder}
+                      dir="ltr"
+                    />
+                  </label>
+                ))}
+              </div>
             </div>
 
             <button
