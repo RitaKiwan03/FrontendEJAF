@@ -73,7 +73,11 @@ export async function loginAdmin(
 ) {
   const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      // ✅ يخبر السيرفر بلغة الواجهة الحالية لإرجاع رسائل الخطأ بنفس اللغة
+      "Accept-Language": isAr ? "ar" : "en",
+    },
     body: JSON.stringify({
       username,
       password,

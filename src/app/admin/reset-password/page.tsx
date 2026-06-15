@@ -267,7 +267,11 @@ function ResetPasswordForm() {
     try {
       const loginRes = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          // ✅ يجعل رسائل الخطأ من السيرفر بنفس لغة الواجهة
+          "Accept-Language": isAr ? "ar" : "en",
+        },
         body: JSON.stringify({
           username,
           password: currentPass,
@@ -287,6 +291,8 @@ function ResetPasswordForm() {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${loginData.token}`,
+          // ✅ يجعل رسائل الخطأ من السيرفر بنفس لغة الواجهة
+          "Accept-Language": isAr ? "ar" : "en",
         },
         body: JSON.stringify({
           current_password: currentPass,

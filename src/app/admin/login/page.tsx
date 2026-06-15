@@ -107,7 +107,13 @@ function LoginForm() {
 
     try {
       // ✅ التحقق الفعلي من CAPTCHA يحدث على السيرفر هنا
-      await loginAdmin(username, password, captcha.captcha_id, captchaAnswer);
+      await loginAdmin(
+        username,
+        password,
+        captcha.captcha_id,
+        captchaAnswer,
+        isAr,
+      );
       router.push(lang ? `/admin/dashboard?lang=${lang}` : "/admin/dashboard");
     } catch (err: any) {
       // رسالة السيرفر إن وُجدت (مثل "فشل التحقق الأمني")، وإلا رسالة عامة
