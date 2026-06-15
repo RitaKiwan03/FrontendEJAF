@@ -9,6 +9,7 @@ import {
   CheckCircle,
   Key,
   Users,
+  ShieldAlert,
 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -16,36 +17,64 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 // ✅ النصوص - عربي / إنجليزي
 const t = {
   title: { ar: "صفحة الاسترجاع السرية", en: "Emergency Recovery" },
-  subtitle: {
-    ar: "أدخل كود الاسترجاع للمتابعة",
-    en: "Enter recovery code to continue",
-  },
   warning: {
-    ar: "هذه الصفحة سرية. أدخل كود الاسترجاع للمتابعة.",
-    en: "This page is secret. Enter recovery code to continue.",
+    ar: "هذه الصفحة سرية. أدخل كلمة مرور الأدمن للمتابعة.",
+    en: "This page is secret. Enter admin password to continue.",
   },
-  recoveryCode: { ar: "كود الاسترجاع", en: "Recovery Code" },
-  placeholder: { ar: "أدخل كود الاسترجاع...", en: "Enter recovery code..." },
+  adminPassword: { ar: "كلمة مرور الأدمن", en: "Admin Password" },
+  placeholder: {
+    ar: "أدخل كلمة مرور الأدمن...",
+    en: "Enter admin password...",
+  },
   enter: { ar: "دخول", en: "Enter" },
   verifying: { ar: "جاري التحقق...", en: "Verifying..." },
   users: { ar: "المستخدمون", en: "Users" },
+  admin: { ar: "أدمن", en: "Admin" },
+  moderator: { ar: "مشرف", en: "Moderator" },
   resetModerator: {
     ar: "إعادة تعيين كلمة مرور المشرف",
     en: "Reset Moderator Password",
   },
-  adminPassword: { ar: "كلمة مرور الأدمن", en: "Admin Password" },
   moderatorUsername: { ar: "اسم المستخدم للمشرف", en: "Moderator Username" },
   newPassword: { ar: "كلمة المرور الجديدة", en: "New Password" },
   reset: { ar: "إعادة التعيين", en: "Reset" },
   resetting: { ar: "جاري...", en: "Resetting..." },
+  block: { ar: "حظر", en: "Block" },
+  blocking: { ar: "جاري...", en: "Blocking..." },
   forceLogout: {
     ar: "تسجيل خروج جميع المستخدمين",
     en: "Force Logout All Users",
   },
   loggingOut: { ar: "جاري...", en: "Logging out..." },
   backToLogin: { ar: "العودة لصفحة تسجيل الدخول", en: "Back to Login" },
-  success: { ar: "نجاح", en: "Success" },
-  error: { ar: "خطأ", en: "Error" },
+  confirmBlock: {
+    ar: (username: string) =>
+      `هل أنت متأكد من حظر "${username}"؟ سيتم إلغاء جميع جلساته.`,
+    en: (username: string) =>
+      `Are you sure you want to block "${username}"? All sessions will be terminated.`,
+  },
+  confirmLogout: {
+    ar: "هل تريد تسجيل خروج جميع المستخدمين؟",
+    en: "Are you sure you want to logout all users?",
+  },
+  // ✅ رسائل النجاح - ديناميكية
+  successReset: {
+    ar: (username: string) => `تم تغيير كلمة مرور المشرف "${username}" بنجاح`,
+    en: (username: string) =>
+      `Moderator "${username}" password changed successfully`,
+  },
+  successBlock: {
+    ar: (username: string) => `تم حظر المشرف "${username}" بنجاح`,
+    en: (username: string) => `Moderator "${username}" blocked successfully`,
+  },
+  successLogout: {
+    ar: "تم تسجيل خروج جميع المستخدمين",
+    en: "All users logged out successfully",
+  },
+  error: {
+    ar: "خطأ",
+    en: "Error",
+  },
 };
 
 type User = {
@@ -64,7 +93,7 @@ export default function RecoveryPage() {
   const isAr = lang === "ar";
 
   const [step, setStep] = useState<"code" | "panel">("code");
-  const [recoveryCode, setRecoveryCode] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
   const [tempToken, setTempToken] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -72,15 +101,15 @@ export default function RecoveryPage() {
   const [users, setUsers] = useState<User[]>([]);
 
   // نموذج إعادة تعيين كلمة مرور الـ moderator
-  const [adminPassword, setAdminPassword] = useState("");
   const [moderatorUsername, setModeratorUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [showAdminPass, setShowAdminPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
 
+  // حالة الحظر
+  const [blockingId, setBlockingId] = useState<number | null>(null);
+
   useEffect(() => {
-    // تحديث عنوان الصفحة حسب اللغة
-    document.title = isAr ? "صفحة الاسترجاع السرية" : "Emergency Recovery";
+    document.title = isAr ? t.title.ar : t.title.en;
   }, [isAr]);
 
   async function handleVerify(e: React.FormEvent) {
@@ -92,7 +121,7 @@ export default function RecoveryPage() {
       const res = await fetch(`${API_URL}/api/recovery/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recovery_code: recoveryCode }),
+        body: JSON.stringify({ admin_password: adminPassword }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
@@ -131,15 +160,19 @@ export default function RecoveryPage() {
           "X-Recovery-Token": tempToken,
         },
         body: JSON.stringify({
-          admin_password: adminPassword,
           moderator_username: moderatorUsername,
           new_password: newPassword,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
-      setSuccess(data.message);
-      setAdminPassword("");
+
+      // ✅ رسالة نجاح ديناميكية
+      setSuccess(
+        isAr
+          ? t.successReset.ar(moderatorUsername)
+          : t.successReset.en(moderatorUsername),
+      );
       setModeratorUsername("");
       setNewPassword("");
     } catch (err: any) {
@@ -149,16 +182,43 @@ export default function RecoveryPage() {
     }
   }
 
-  async function handleForceLogout() {
+  async function handleBlock(userId: number, username: string) {
     if (
-      !confirm(
-        isAr
-          ? "هل تريد تسجيل خروج جميع المستخدمين؟"
-          : "Are you sure you want to logout all users?",
-      )
+      !confirm(isAr ? t.confirmBlock.ar(username) : t.confirmBlock.en(username))
     )
       return;
+
+    setBlockingId(userId);
+    setError("");
+
+    try {
+      const res = await fetch(`${API_URL}/api/recovery/block-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Recovery-Token": tempToken,
+        },
+        body: JSON.stringify({ user_id: userId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      // ✅ رسالة نجاح ديناميكية
+      setSuccess(
+        isAr ? t.successBlock.ar(username) : t.successBlock.en(username),
+      );
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setBlockingId(null);
+    }
+  }
+
+  async function handleForceLogout() {
+    if (!confirm(isAr ? t.confirmLogout.ar : t.confirmLogout.en)) return;
     setLoading(true);
+    setError("");
+
     try {
       const res = await fetch(`${API_URL}/api/recovery/force-logout`, {
         method: "POST",
@@ -166,7 +226,7 @@ export default function RecoveryPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setSuccess(data.message);
+        setSuccess(isAr ? t.successLogout.ar : t.successLogout.en);
         setTimeout(() => router.push("/admin/login"), 2000);
       } else {
         setError(data.message);
@@ -201,7 +261,7 @@ export default function RecoveryPage() {
 
         {error && (
           <div className="mb-4 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-300">
-            ️ {error}
+            ⚠️ {error}
           </div>
         )}
         {success && (
@@ -218,11 +278,11 @@ export default function RecoveryPage() {
               {isAr ? t.warning.ar : t.warning.en}
             </div>
             <label className="block space-y-1.5 text-sm text-slate-300">
-              <span>{isAr ? t.recoveryCode.ar : t.recoveryCode.en}</span>
+              <span>{isAr ? t.adminPassword.ar : t.adminPassword.en}</span>
               <input
                 type="password"
-                value={recoveryCode}
-                onChange={(e) => setRecoveryCode(e.target.value)}
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
                 required
                 className={inputCls}
                 placeholder={isAr ? t.placeholder.ar : t.placeholder.en}
@@ -267,14 +327,29 @@ export default function RecoveryPage() {
                         >
                           {u.is_admin
                             ? isAr
-                              ? "أدمن"
-                              : "Admin"
+                              ? t.admin.ar
+                              : t.admin.en
                             : isAr
-                              ? "مشرف"
-                              : "Moderator"}
+                              ? t.moderator.ar
+                              : t.moderator.en}
                         </span>
                       </p>
                     </div>
+                    {/* ✅ زر الحظر - للمشرفين فقط */}
+                    {!u.is_admin && (
+                      <button
+                        onClick={() => handleBlock(u.id, u.username)}
+                        disabled={blockingId === u.id}
+                        className="inline-flex items-center gap-2 rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-sm text-rose-300 hover:bg-rose-400/20 disabled:opacity-50"
+                      >
+                        {blockingId === u.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <ShieldAlert className="h-4 w-4" />
+                        )}
+                        {isAr ? t.block.ar : t.block.en}
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -287,27 +362,6 @@ export default function RecoveryPage() {
                 {isAr ? t.resetModerator.ar : t.resetModerator.en}
               </h2>
               <form onSubmit={handleResetModerator} className="space-y-3">
-                <label className="block space-y-1.5 text-sm text-slate-300">
-                  <span>{isAr ? t.adminPassword.ar : t.adminPassword.en}</span>
-                  <div className="relative">
-                    <input
-                      type={showAdminPass ? "text" : "password"}
-                      value={adminPassword}
-                      onChange={(e) => setAdminPassword(e.target.value)}
-                      required
-                      className={inputCls}
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowAdminPass(!showAdminPass)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
-                    >
-                      {showAdminPass ? "" : "👁️"}
-                    </button>
-                  </div>
-                </label>
-
                 <label className="block space-y-1.5 text-sm text-slate-300">
                   <span>
                     {isAr ? t.moderatorUsername.ar : t.moderatorUsername.en}
