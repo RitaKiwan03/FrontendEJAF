@@ -1,8 +1,17 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff, RefreshCw, Check, X, ShieldCheck } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  RefreshCw,
+  Check,
+  X,
+  ShieldCheck,
+  Loader2,
+} from "lucide-react";
+import { getCaptcha } from "@/lib/admin-api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -54,20 +63,12 @@ const t = {
   // HumanCheck
   verifyTitle: { ar: "التحقق من الهوية", en: "Human Verification" },
   verifyDesc: {
-    ar: "أجب على السؤال للتأكد أنك لست روبوت:",
-    en: "Answer the question to verify you're not a robot:",
+    ar: "أجب على السؤال للتأكد أنك لست روبوت — سيُتحقق منه عند الحفظ:",
+    en: "Answer the question to verify you're not a robot — checked on save:",
   },
-  verifyQuestion: { ar: "كم يساوي", en: "What is" },
   verifyPlaceholder: { ar: "الجواب", en: "Answer" },
-  verifyBtn: { ar: "تحقق", en: "Verify" },
-  verifySuccess: {
-    ar: "تم التحقق — لست روبوت ✓",
-    en: "Verified — you're not a robot ✓",
-  },
-  verifyError: {
-    ar: "إجابة خاطئة، حاول مرة أخرى",
-    en: "Wrong answer, try again",
-  },
+  verifyLoading: { ar: "جاري تحميل السؤال...", en: "Loading question..." },
+  verifyLoadError: { ar: "تعذر تحميل السؤال", en: "Could not load question" },
 };
 
 // ============================================================
@@ -122,53 +123,22 @@ function generatePassword(): string {
 }
 
 // ============================================================
-// مكوّن التحقق "لست روبوت"
+// مكوّن التحقق "لست روبوت" — السؤال من السيرفر
+// التحقق الفعلي من الإجابة يحدث على السيرفر عند الحفظ (login)
 // ============================================================
 function HumanCheck({
-  onVerified,
+  answer,
+  onAnswerChange,
+  captcha,
+  loading,
   isAr,
 }: {
-  onVerified: (v: boolean) => void;
+  answer: string;
+  onAnswerChange: (v: string) => void;
+  captcha: { captcha_id: string; question: string } | null;
+  loading: boolean;
   isAr: boolean;
 }) {
-  const [checked, setChecked] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [challenge, setChallenge] = useState(() => {
-    const a = Math.floor(Math.random() * 9) + 1;
-    const b = Math.floor(Math.random() * 9) + 1;
-    return { a, b, answer: String(a + b) };
-  });
-  const [input, setInput] = useState("");
-  const [error, setError] = useState(false);
-
-  function verify() {
-    setLoading(true);
-    setTimeout(() => {
-      if (input.trim() === challenge.answer) {
-        setChecked(true);
-        onVerified(true);
-        setError(false);
-      } else {
-        setError(true);
-        const a = Math.floor(Math.random() * 9) + 1;
-        const b = Math.floor(Math.random() * 9) + 1;
-        setChallenge({ a, b, answer: String(a + b) });
-        setInput("");
-        onVerified(false);
-      }
-      setLoading(false);
-    }, 600);
-  }
-
-  if (checked) {
-    return (
-      <div className="flex items-center gap-2 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-300">
-        <ShieldCheck className="h-4 w-4" />
-        {isAr ? t.verifySuccess.ar : t.verifySuccess.en}
-      </div>
-    );
-  }
-
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
       <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">
@@ -177,32 +147,28 @@ function HumanCheck({
       <p className="text-sm text-slate-300">
         {isAr ? t.verifyDesc.ar : t.verifyDesc.en}
       </p>
-      <p className="text-lg font-semibold text-white">
-        {isAr
-          ? `كم يساوي ${challenge.a} + ${challenge.b} ؟`
-          : `What is ${challenge.a} + ${challenge.b}?`}
-      </p>
-      <div className="flex gap-2">
-        <input
-          type="number"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && verify()}
-          placeholder={isAr ? t.verifyPlaceholder.ar : t.verifyPlaceholder.en}
-          className="w-24 rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-center text-white outline-none focus:border-cyan-300/40"
-        />
-        <button
-          type="button"
-          onClick={verify}
-          disabled={loading || !input}
-          className="rounded-full bg-cyan-400/15 px-4 py-2 text-sm text-cyan-300 hover:bg-cyan-400/25 disabled:opacity-50"
-        >
-          {loading ? "..." : isAr ? t.verifyBtn.ar : t.verifyBtn.en}
-        </button>
-      </div>
-      {error && (
-        <p className="text-xs text-rose-400">
-          {isAr ? t.verifyError.ar : t.verifyError.en}
+
+      {loading ? (
+        <div className="flex items-center gap-2 text-slate-400 text-sm">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          {isAr ? t.verifyLoading.ar : t.verifyLoading.en}
+        </div>
+      ) : captcha ? (
+        <>
+          <p className="text-lg font-semibold text-white">
+            {captcha.question} = ?
+          </p>
+          <input
+            type="number"
+            value={answer}
+            onChange={(e) => onAnswerChange(e.target.value)}
+            placeholder={isAr ? t.verifyPlaceholder.ar : t.verifyPlaceholder.en}
+            className="w-24 rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-center text-white outline-none focus:border-cyan-300/40"
+          />
+        </>
+      ) : (
+        <p className="text-sm text-rose-400">
+          {isAr ? t.verifyLoadError.ar : t.verifyLoadError.en}
         </p>
       )}
     </div>
@@ -227,8 +193,33 @@ function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [humanPassed, setHumanPassed] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // ✅ CAPTCHA من السيرفر — نفس آلية صفحة الدخول
+  const [captcha, setCaptcha] = useState<{
+    captcha_id: string;
+    question: string;
+  } | null>(null);
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [captchaLoading, setCaptchaLoading] = useState(true);
+
+  async function loadCaptcha() {
+    setCaptchaLoading(true);
+    try {
+      const c = await getCaptcha();
+      setCaptcha(c);
+      setCaptchaAnswer("");
+    } catch {
+      setCaptcha(null);
+    } finally {
+      setCaptchaLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadCaptcha();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const strength = getStrength(newPass, isAr);
 
@@ -262,7 +253,7 @@ function ResetPasswordForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!humanPassed) {
+    if (!captcha || !captchaAnswer.trim()) {
       setError(isAr ? t.errHuman.ar : t.errHuman.en);
       return;
     }
@@ -277,7 +268,12 @@ function ResetPasswordForm() {
       const loginRes = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password: currentPass }),
+        body: JSON.stringify({
+          username,
+          password: currentPass,
+          captcha_id: captcha.captcha_id,
+          captcha_answer: captchaAnswer,
+        }),
       });
       const loginData = await loginRes.json();
       if (!loginRes.ok)
@@ -317,6 +313,8 @@ function ResetPasswordForm() {
             ? t.errDefault.ar
             : t.errDefault.en,
       );
+      // ✅ CAPTCHA تُستخدم مرة واحدة — حمّل سؤالاً جديداً بعد أي فشل
+      await loadCaptcha();
     } finally {
       setLoading(false);
     }
@@ -357,7 +355,12 @@ function ResetPasswordForm() {
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          method="post"
+          autoComplete="off"
+          className="mt-6 space-y-4"
+        >
           {/* اسم المستخدم */}
           <label className="block space-y-1.5 text-sm text-slate-300">
             <span>{isAr ? t.username.ar : t.username.en}</span>
@@ -513,7 +516,13 @@ function ResetPasswordForm() {
           </label>
 
           {/* التحقق من الهوية */}
-          <HumanCheck onVerified={setHumanPassed} isAr={isAr} />
+          <HumanCheck
+            answer={captchaAnswer}
+            onAnswerChange={setCaptchaAnswer}
+            captcha={captcha}
+            loading={captchaLoading}
+            isAr={isAr}
+          />
 
           {/* أزرار */}
           <div className="flex gap-3 pt-2">
@@ -528,7 +537,13 @@ function ResetPasswordForm() {
             </button>
             <button
               type="submit"
-              disabled={loading || !humanPassed || !allRulesPassed}
+              disabled={
+                loading ||
+                captchaLoading ||
+                !captcha ||
+                !captchaAnswer.trim() ||
+                !allRulesPassed
+              }
               className="flex-1 rounded-full bg-white py-3 text-sm font-semibold text-slate-950 transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading
