@@ -633,6 +633,34 @@ function ChangePassword({ isAr }: { isAr: boolean }) {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  // ✅ متطلبات كلمة المرور
+  const passwordChecks = [
+    {
+      label: isAr ? "8 أحرف على الأقل" : "At least 8 characters",
+      ok: newPass.length >= 8,
+    },
+    {
+      label: isAr ? "حرف كبير (A-Z)" : "Uppercase letter (A-Z)",
+      ok: /[A-Z]/.test(newPass),
+    },
+    {
+      label: isAr ? "حرف صغير (a-z)" : "Lowercase letter (a-z)",
+      ok: /[a-z]/.test(newPass),
+    },
+    {
+      label: isAr ? "رقم (0-9)" : "Number (0-9)",
+      ok: /[0-9]/.test(newPass),
+    },
+    {
+      label: isAr ? "رمز خاص (!@#$...)" : "Special character (!@#$...)",
+      ok: /[^A-Za-z0-9]/.test(newPass),
+    },
+    {
+      label: isAr ? "كلمتا المرور متطابقتان" : "Passwords match",
+      ok: confirmPass.length > 0 && newPass === confirmPass,
+    },
+  ];
+
   function generatePassword() {
     const chars =
       "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%^&*";
@@ -772,6 +800,34 @@ function ChangePassword({ isAr }: { isAr: boolean }) {
             </button>
           </div>
         </div>
+
+        {/* ✅ قائمة متطلبات كلمة المرور */}
+        {newPass.length > 0 && (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-widest text-cyan-300">
+              {isAr ? "المتطلبات" : "Requirements"}
+            </p>
+            <ul className="space-y-1.5">
+              {passwordChecks.map((check) => (
+                <li
+                  key={check.label}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  {check.ok ? (
+                    <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                  ) : (
+                    <X className="h-3.5 w-3.5 shrink-0 text-rose-400" />
+                  )}
+                  <span
+                    className={check.ok ? "text-emerald-300" : "text-slate-400"}
+                  >
+                    {check.label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="space-y-1.5">
           <label className="text-xs text-slate-500">
