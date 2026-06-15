@@ -515,3 +515,139 @@ export async function blockModerator(userId: number, isAr = false) {
     throw new Error(t("فشل حظر المستخدم", "Failed to block user", isAr));
   return res.json();
 }
+
+// ✅ فك حظر الـ Moderator
+export async function unblockModerator(userId: number, isAr = false) {
+  const res = await fetch(`${API_URL}/api/admin/users/${userId}/unblock`, {
+    method: "POST",
+    headers: adminHeaders(isAr),
+  });
+  if (!res.ok)
+    throw new Error(t("فشل فك الحظر", "Failed to unblock user", isAr));
+  return res.json();
+}
+
+// ==================== RECOVERY ====================
+export async function recoveryVerify(adminPassword: string, isAr = false) {
+  const res = await fetch(`${API_URL}/api/recovery/verify`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept-Language": isAr ? "ar" : "en",
+    },
+    body: JSON.stringify({ admin_password: adminPassword }),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(
+      e.message ||
+        t("كلمة مرور الأدمن غير صحيحة", "Admin password is incorrect", isAr),
+    );
+  }
+  return res.json();
+}
+
+export async function recoveryGetUsers(token: string, isAr = false) {
+  const res = await fetch(`${API_URL}/api/recovery/users`, {
+    headers: {
+      "X-Recovery-Token": token,
+      "Accept-Language": isAr ? "ar" : "en",
+    },
+  });
+  if (!res.ok)
+    throw new Error(t("فشل جلب المستخدمين", "Failed to fetch users", isAr));
+  return res.json();
+}
+
+export async function recoveryResetModerator(
+  token: string,
+  moderatorUsername: string,
+  newPassword: string,
+  isAr = false,
+) {
+  const res = await fetch(`${API_URL}/api/recovery/reset-moderator`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Recovery-Token": token,
+      "Accept-Language": isAr ? "ar" : "en",
+    },
+    body: JSON.stringify({
+      moderator_username: moderatorUsername,
+      new_password: newPassword,
+    }),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(
+      e.message ||
+        t("فشل تغيير كلمة المرور", "Failed to change password", isAr),
+    );
+  }
+  return res.json();
+}
+
+// ✅ جديد - حظر مستخدم من Recovery
+export async function recoveryBlockUser(
+  token: string,
+  userId: number,
+  isAr = false,
+) {
+  const res = await fetch(`${API_URL}/api/recovery/block-user`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Recovery-Token": token,
+      "Accept-Language": isAr ? "ar" : "en",
+    },
+    body: JSON.stringify({ user_id: userId }),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(
+      e.message || t("فشل حظر المستخدم", "Failed to block user", isAr),
+    );
+  }
+  return res.json();
+}
+
+// ✅ جديد - فك حظر مستخدم من Recovery
+export async function recoveryUnblockUser(
+  token: string,
+  userId: number,
+  isAr = false,
+) {
+  const res = await fetch(`${API_URL}/api/recovery/unblock-user`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Recovery-Token": token,
+      "Accept-Language": isAr ? "ar" : "en",
+    },
+    body: JSON.stringify({ user_id: userId }),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(
+      e.message || t("فشل فك الحظر", "Failed to unblock user", isAr),
+    );
+  }
+  return res.json();
+}
+
+export async function recoveryForceLogout(token: string, isAr = false) {
+  const res = await fetch(`${API_URL}/api/recovery/force-logout`, {
+    method: "POST",
+    headers: {
+      "X-Recovery-Token": token,
+      "Accept-Language": isAr ? "ar" : "en",
+    },
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(
+      e.message || t("فشل تسجيل الخروج", "Failed to logout users", isAr),
+    );
+  }
+  return res.json();
+}
