@@ -9,6 +9,9 @@ import {
   Plus,
   Trash2,
   ChevronDown,
+  Eye,
+  EyeOff,
+  RefreshCw,
 } from "lucide-react";
 import { getSettings, updateSettings, uploadLogo } from "@/lib/admin-api";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -599,10 +602,7 @@ export default function AdminSettingsPage({ searchParams }: Props) {
                   {isAr ? "جاري الحفظ..." : "Saving..."}
                 </>
               ) : saved ? (
-                <>
-                  {/* <Check className="h-4 w-4" /> */}
-                  {isAr ? "تم الحفظ ✓" : "Saved ✓"}
-                </>
+                <>{isAr ? "تم الحفظ ✓" : "Saved ✓"}</>
               ) : isAr ? (
                 "حفظ الإعدادات"
               ) : (
@@ -611,7 +611,220 @@ export default function AdminSettingsPage({ searchParams }: Props) {
             </button>
           </form>
         )}
+        {/* ── Change Password ── */}
+        <ChangePassword isAr={isAr} />
       </div>
     </AdminShell>
+  );
+}
+
+// ============================================================
+// Change Password Component
+// ============================================================
+function ChangePassword({ isAr }: { isAr: boolean }) {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const [currentPass, setCurrentPass] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  function generatePassword() {
+    const chars =
+      "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%^&*";
+    let pass = "";
+    for (let i = 0; i < 16; i++)
+      pass += chars[Math.floor(Math.random() * chars.length)];
+    setNewPass(pass);
+    setConfirmPass(pass);
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPass !== confirmPass) {
+      setError(isAr ? "كلمتا المرور غير متطابقتين" : "Passwords do not match");
+      return;
+    }
+    if (newPass.length < 8) {
+      setError(
+        isAr
+          ? "كلمة المرور يجب أن تكون 8 أحرف على الأقل"
+          : "Password must be at least 8 characters",
+      );
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      const token = localStorage.getItem("ejaf_token");
+      const res = await fetch(`${API_URL}/api/auth/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          current_password: currentPass,
+          new_password: newPass,
+          new_password_confirmation: confirmPass,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(
+          data.message ||
+            (isAr ? "فشل تغيير كلمة المرور" : "Failed to change password"),
+        );
+      setSaved(true);
+      setCurrentPass("");
+      setNewPass("");
+      setConfirmPass("");
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const inputCls =
+    "w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/40";
+
+  return (
+    <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.05] p-6 space-y-4 mt-6">
+      <p className="text-base font-semibold text-white">
+        {isAr ? "تغيير كلمة المرور" : "Change Password"}
+      </p>
+
+      {error && (
+        <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-300">
+          ⚠️ {error}
+        </div>
+      )}
+      {saved && (
+        <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-300">
+          ✓{" "}
+          {isAr
+            ? "تم تغيير كلمة المرور بنجاح"
+            : "Password changed successfully"}
+        </div>
+      )}
+
+      <form
+        onSubmit={handleChangePassword}
+        className="space-y-4"
+        autoComplete="off"
+      >
+        <div className="space-y-1.5">
+          <label className="text-xs text-slate-500">
+            {isAr ? "كلمة المرور الحالية" : "Current Password"}
+          </label>
+          <div className="relative">
+            <input
+              type={showCurrent ? "text" : "password"}
+              value={currentPass}
+              onChange={(e) => setCurrentPass(e.target.value)}
+              required
+              className={`${inputCls} pr-10`}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowCurrent((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+            >
+              {showCurrent ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs text-slate-500">
+            {isAr ? "كلمة المرور الجديدة" : "New Password"}
+          </label>
+          <div className="relative">
+            <input
+              type={showNew ? "text" : "password"}
+              value={newPass}
+              onChange={(e) => setNewPass(e.target.value)}
+              required
+              className={`${inputCls} pr-10`}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowNew((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+            >
+              {showNew ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs text-slate-500">
+            {isAr ? "تأكيد كلمة المرور" : "Confirm Password"}
+          </label>
+          <div className="relative">
+            <input
+              type={showConfirm ? "text" : "password"}
+              value={confirmPass}
+              onChange={(e) => setConfirmPass(e.target.value)}
+              required
+              className={`${inputCls} pr-10`}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirm((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+            >
+              {showConfirm ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={generatePassword}
+            className="flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-300 hover:bg-cyan-400/20 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4" />
+            {isAr ? "توليد كلمة مرور" : "Generate password"}
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-950 hover:-translate-y-0.5 transition-transform disabled:opacity-60"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {saving
+              ? isAr
+                ? "جاري الحفظ..."
+                : "Saving..."
+              : isAr
+                ? "تغيير كلمة المرور"
+                : "Change password"}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }

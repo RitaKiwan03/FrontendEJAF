@@ -1,576 +1,71 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Eye,
-  EyeOff,
-  RefreshCw,
-  Check,
-  X,
-  ShieldCheck,
-  Loader2,
-} from "lucide-react";
-import { getCaptcha } from "@/lib/admin-api";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import Link from "next/link";
+import { Shield, Mail, ArrowLeft } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
-// ============================================================
-// النصوص — عربي / إنجليزي
-// ============================================================
-const t = {
-  brand: { ar: "إدارة EJAF", en: "EJAF Admin" },
-  title: { ar: "إعادة تعيين كلمة المرور", en: "Reset Password" },
-  subtitle: {
-    ar: "أدخل بياناتك لتغيير كلمة المرور",
-    en: "Enter your credentials to change your password",
-  },
-  username: { ar: "اسم المستخدم", en: "Username" },
-  currentPass: { ar: "كلمة المرور الحالية", en: "Current Password" },
-  newPass: { ar: "كلمة المرور الجديدة", en: "New Password" },
-  confirmPass: { ar: "تأكيد كلمة المرور", en: "Confirm Password" },
-  strengthLabel: { ar: "قوة كلمة المرور:", en: "Password strength:" },
-  weak: { ar: "ضعيفة", en: "Weak" },
-  medium: { ar: "متوسطة", en: "Medium" },
-  strong: { ar: "قوية جداً", en: "Very strong" },
-  rulesTitle: { ar: "الشروط", en: "Requirements" },
-  rule1: { ar: "8 أحرف على الأقل", en: "At least 8 characters" },
-  rule2: { ar: "حرف كبير (A-Z)", en: "Uppercase letter (A-Z)" },
-  rule3: { ar: "حرف صغير (a-z)", en: "Lowercase letter (a-z)" },
-  rule4: { ar: "رقم (0-9)", en: "Number (0-9)" },
-  rule5: { ar: "رمز خاص (!@#$...)", en: "Special character (!@#$...)" },
-  rule6: { ar: "تطابق تأكيد كلمة المرور", en: "Passwords match" },
-  generate: { ar: "توليد كلمة مرور قوية", en: "Generate strong password" },
-  copy: { ar: "نسخ", en: "Copy" },
-  copied: { ar: "✓ تم النسخ", en: "✓ Copied" },
-  back: { ar: "رجوع", en: "Back" },
-  save: { ar: "حفظ كلمة المرور الجديدة", en: "Save new password" },
-  saving: { ar: "جاري الحفظ...", en: "Saving..." },
-  successTitle: { ar: "تم تغيير كلمة المرور!", en: "Password changed!" },
-  successSub: {
-    ar: "سيتم توجيهك لصفحة الدخول...",
-    en: "Redirecting to login...",
-  },
-  errHuman: {
-    ar: "يرجى إكمال التحقق من الهوية أولاً",
-    en: "Please complete the verification first",
-  },
-  errRules: {
-    ar: "كلمة المرور لا تستوفي الشروط",
-    en: "Password does not meet requirements",
-  },
-  errDefault: { ar: "حدث خطأ", en: "An error occurred" },
-  // HumanCheck
-  verifyTitle: { ar: "التحقق من الهوية", en: "Human Verification" },
-  verifyDesc: {
-    ar: "أجب على السؤال للتأكد أنك لست روبوت — سيُتحقق منه عند الحفظ:",
-    en: "Answer the question to verify you're not a robot — checked on save:",
-  },
-  verifyPlaceholder: { ar: "الجواب", en: "Answer" },
-  verifyLoading: { ar: "جاري تحميل السؤال...", en: "Loading question..." },
-  verifyLoadError: { ar: "تعذر تحميل السؤال", en: "Could not load question" },
-};
-
-// ============================================================
-// قياس قوة كلمة المرور
-// ============================================================
-function getStrength(password: string, isAr: boolean) {
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[a-z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-
-  if (score <= 2)
-    return { score, label: isAr ? t.weak.ar : t.weak.en, color: "bg-rose-500" };
-  if (score <= 4)
-    return {
-      score,
-      label: isAr ? t.medium.ar : t.medium.en,
-      color: "bg-amber-400",
-    };
-  return {
-    score,
-    label: isAr ? t.strong.ar : t.strong.en,
-    color: "bg-emerald-400",
-  };
-}
-
-// ============================================================
-// توليد كلمة مرور عشوائية قوية
-// ============================================================
-function generatePassword(): string {
-  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-  const lower = "abcdefghjkmnpqrstuvwxyz";
-  const digits = "23456789";
-  const symbols = "!@#$%^&*-_+=?";
-  const all = upper + lower + digits + symbols;
-
-  let pass = "";
-  pass += upper[Math.floor(Math.random() * upper.length)];
-  pass += lower[Math.floor(Math.random() * lower.length)];
-  pass += digits[Math.floor(Math.random() * digits.length)];
-  pass += symbols[Math.floor(Math.random() * symbols.length)];
-  for (let i = 4; i < 16; i++) {
-    pass += all[Math.floor(Math.random() * all.length)];
-  }
-  return pass
-    .split("")
-    .sort(() => Math.random() - 0.5)
-    .join("");
-}
-
-// ============================================================
-// مكوّن التحقق "لست روبوت" — السؤال من السيرفر
-// التحقق الفعلي من الإجابة يحدث على السيرفر عند الحفظ (login)
-// ============================================================
-function HumanCheck({
-  answer,
-  onAnswerChange,
-  captcha,
-  loading,
-  isAr,
-}: {
-  answer: string;
-  onAnswerChange: (v: string) => void;
-  captcha: { captcha_id: string; question: string } | null;
-  loading: boolean;
-  isAr: boolean;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">
-        {isAr ? t.verifyTitle.ar : t.verifyTitle.en}
-      </p>
-      <p className="text-sm text-slate-300">
-        {isAr ? t.verifyDesc.ar : t.verifyDesc.en}
-      </p>
-
-      {loading ? (
-        <div className="flex items-center gap-2 text-slate-400 text-sm">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          {isAr ? t.verifyLoading.ar : t.verifyLoading.en}
-        </div>
-      ) : captcha ? (
-        <>
-          <p className="text-lg font-semibold text-white">
-            {captcha.question} = ?
-          </p>
-          <input
-            type="number"
-            value={answer}
-            onChange={(e) => onAnswerChange(e.target.value)}
-            placeholder={isAr ? t.verifyPlaceholder.ar : t.verifyPlaceholder.en}
-            className="w-24 rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-center text-white outline-none focus:border-cyan-300/40"
-          />
-        </>
-      ) : (
-        <p className="text-sm text-rose-400">
-          {isAr ? t.verifyLoadError.ar : t.verifyLoadError.en}
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ============================================================
-// الصفحة الرئيسية
-// ============================================================
-function ResetPasswordForm() {
-  const router = useRouter();
+function ForgotPasswordContent() {
   const searchParams = useSearchParams();
   const lang = searchParams.get("lang");
   const isAr = lang === "ar";
 
-  const [username, setUsername] = useState("");
-  const [currentPass, setCurrentPass] = useState("");
-  const [newPass, setNewPass] = useState("");
-  const [confirmPass, setConfirmPass] = useState("");
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  // ✅ CAPTCHA من السيرفر — نفس آلية صفحة الدخول
-  const [captcha, setCaptcha] = useState<{
-    captcha_id: string;
-    question: string;
-  } | null>(null);
-  const [captchaAnswer, setCaptchaAnswer] = useState("");
-  const [captchaLoading, setCaptchaLoading] = useState(true);
-
-  async function loadCaptcha() {
-    setCaptchaLoading(true);
-    try {
-      const c = await getCaptcha();
-      setCaptcha(c);
-      setCaptchaAnswer("");
-    } catch {
-      setCaptcha(null);
-    } finally {
-      setCaptchaLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadCaptcha();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const strength = getStrength(newPass, isAr);
-
-  const rules = [
-    { label: isAr ? t.rule1.ar : t.rule1.en, ok: newPass.length >= 8 },
-    { label: isAr ? t.rule2.ar : t.rule2.en, ok: /[A-Z]/.test(newPass) },
-    { label: isAr ? t.rule3.ar : t.rule3.en, ok: /[a-z]/.test(newPass) },
-    { label: isAr ? t.rule4.ar : t.rule4.en, ok: /[0-9]/.test(newPass) },
-    { label: isAr ? t.rule5.ar : t.rule5.en, ok: /[^A-Za-z0-9]/.test(newPass) },
-    {
-      label: isAr ? t.rule6.ar : t.rule6.en,
-      ok: newPass === confirmPass && confirmPass !== "",
-    },
-  ];
-
-  const allRulesPassed = rules.every((r) => r.ok);
-
-  function handleGenerate() {
-    const pass = generatePassword();
-    setNewPass(pass);
-    setConfirmPass(pass);
-    setShowNew(true);
-    setShowConfirm(true);
-  }
-
-  async function handleCopy() {
-    await navigator.clipboard.writeText(newPass);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!captcha || !captchaAnswer.trim()) {
-      setError(isAr ? t.errHuman.ar : t.errHuman.en);
-      return;
-    }
-    if (!allRulesPassed) {
-      setError(isAr ? t.errRules.ar : t.errRules.en);
-      return;
-    }
-    setLoading(true);
-    setError("");
-
-    try {
-      const loginRes = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // ✅ يجعل رسائل الخطأ من السيرفر بنفس لغة الواجهة
-          "Accept-Language": isAr ? "ar" : "en",
-        },
-        body: JSON.stringify({
-          username,
-          password: currentPass,
-          captcha_id: captcha.captcha_id,
-          captcha_answer: captchaAnswer,
-        }),
-      });
-      const loginData = await loginRes.json();
-      if (!loginRes.ok)
-        throw new Error(
-          loginData.message ||
-            (isAr ? "بيانات الدخول غير صحيحة" : "Invalid credentials"),
-        );
-
-      const changeRes = await fetch(`${API_URL}/api/auth/change-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${loginData.token}`,
-          // ✅ يجعل رسائل الخطأ من السيرفر بنفس لغة الواجهة
-          "Accept-Language": isAr ? "ar" : "en",
-        },
-        body: JSON.stringify({
-          current_password: currentPass,
-          new_password: newPass,
-          new_password_confirmation: confirmPass,
-        }),
-      });
-      const changeData = await changeRes.json();
-      if (!changeRes.ok)
-        throw new Error(
-          changeData.message ||
-            (isAr ? "فشل تغيير كلمة المرور" : "Failed to change password"),
-        );
-
-      setSuccess(true);
-      setTimeout(() => {
-        router.push(lang ? `/admin/login?lang=${lang}` : "/admin/login");
-      }, 2500);
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : isAr
-            ? t.errDefault.ar
-            : t.errDefault.en,
-      );
-      // ✅ CAPTCHA تُستخدم مرة واحدة — حمّل سؤالاً جديداً بعد أي فشل
-      await loadCaptcha();
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (success) {
-    return (
-      <div className="flex min-h-[80vh] items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-[2rem] border border-emerald-400/20 bg-emerald-400/10 p-10 text-center">
-          <ShieldCheck className="mx-auto h-12 w-12 text-emerald-400" />
-          <h2 className="mt-4 text-2xl font-semibold text-white">
-            {isAr ? t.successTitle.ar : t.successTitle.en}
-          </h2>
-          <p className="mt-2 text-sm text-slate-400">
-            {isAr ? t.successSub.ar : t.successSub.en}
+  return (
+    <div className="flex min-h-[80vh] items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-white/[0.05] p-8 shadow-[0_20px_80px_rgba(2,6,23,0.5)] backdrop-blur-xl sm:p-10 text-center">
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <Shield className="h-4 w-4 text-cyan-300" />
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-cyan-300">
+            {isAr ? "إدارة EJAF" : "EJAF Admin"}
           </p>
         </div>
-      </div>
-    );
-  }
 
-  return (
-    <div className="flex min-h-[80vh] items-center justify-center px-4 py-12">
-      <div className="w-full max-w-lg rounded-[2rem] border border-white/10 bg-white/[0.05] p-8 shadow-[0_20px_80px_rgba(2,6,23,0.5)] backdrop-blur-xl sm:p-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-cyan-300">
-          {isAr ? t.brand.ar : t.brand.en}
-        </p>
-        <h1 className="mt-3 text-2xl font-semibold text-white sm:text-3xl">
-          {isAr ? t.title.ar : t.title.en}
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-400/10">
+          <Mail className="h-8 w-8 text-cyan-300" />
+        </div>
+
+        <h1 className="text-2xl font-semibold text-white mb-3">
+          {isAr ? "نسيت كلمة المرور؟" : "Forgot your password?"}
         </h1>
-        <p className="mt-2 text-sm text-slate-400">
-          {isAr ? t.subtitle.ar : t.subtitle.en}
+
+        <p className="text-sm text-slate-400 leading-7 mb-6">
+          {isAr
+            ? "لإعادة تعيين كلمة المرور، تواصل مع مسؤول النظام عبر البريد الإلكتروني:"
+            : "To reset your password, contact the system administrator at:"}
         </p>
 
-        {error && (
-          <p className="mt-4 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-2.5 text-sm text-rose-300">
-            {error}
-          </p>
-        )}
-
-        <form
-          onSubmit={handleSubmit}
-          method="post"
-          autoComplete="off"
-          className="mt-6 space-y-4"
+        <a
+          href="mailto:Rayan-Frihat@proton.me"
+          className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-6 py-3 text-sm font-medium text-cyan-300 hover:bg-cyan-400/20 transition-colors"
         >
-          {/* اسم المستخدم */}
-          <label className="block space-y-1.5 text-sm text-slate-300">
-            <span>{isAr ? t.username.ar : t.username.en}</span>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/40"
-            />
-          </label>
+          <Mail className="h-4 w-4" />
+          Rayan-Frihat@proton.me
+        </a>
 
-          {/* كلمة المرور الحالية */}
-          <label className="block space-y-1.5 text-sm text-slate-300">
-            <span>{isAr ? t.currentPass.ar : t.currentPass.en}</span>
-            <input
-              type="password"
-              value={currentPass}
-              onChange={(e) => setCurrentPass(e.target.value)}
-              required
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/40"
-              placeholder="••••••••"
-            />
-          </label>
+        <p className="mt-4 text-xs text-slate-500">
+          {isAr
+            ? "سيتم الرد عليك في أقرب وقت ممكن"
+            : "You will receive a response as soon as possible"}
+        </p>
 
-          {/* كلمة المرور الجديدة */}
-          <label className="block space-y-1.5 text-sm text-slate-300">
-            <span>{isAr ? t.newPass.ar : t.newPass.en}</span>
-            <div className="relative">
-              <input
-                type={showNew ? "text" : "password"}
-                value={newPass}
-                onChange={(e) => setNewPass(e.target.value)}
-                required
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 pr-12 text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/40"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowNew((v) => !v)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-              >
-                {showNew ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          </label>
-
-          {/* مؤشر القوة */}
-          {newPass && (
-            <div className="space-y-2">
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div
-                    key={i}
-                    className={`h-1.5 flex-1 rounded-full transition-all ${i <= strength.score ? strength.color : "bg-white/10"}`}
-                  />
-                ))}
-              </div>
-              <p className="text-xs text-slate-400">
-                {isAr ? t.strengthLabel.ar : t.strengthLabel.en}{" "}
-                <span className="font-medium text-white">{strength.label}</span>
-              </p>
-            </div>
-          )}
-
-          {/* شروط كلمة المرور */}
-          {newPass && (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
-                {isAr ? t.rulesTitle.ar : t.rulesTitle.en}
-              </p>
-              {rules.map((rule) => (
-                <div
-                  key={rule.label}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  {rule.ok ? (
-                    <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                  ) : (
-                    <X className="h-3.5 w-3.5 text-rose-400 shrink-0" />
-                  )}
-                  <span
-                    className={rule.ok ? "text-slate-300" : "text-slate-500"}
-                  >
-                    {rule.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* توليد كلمة مرور */}
-          <div className="flex gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={handleGenerate}
-              className="flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2.5 text-sm text-cyan-300 hover:bg-cyan-400/15 transition-colors"
-            >
-              <RefreshCw className="h-4 w-4" />
-              {isAr ? t.generate.ar : t.generate.en}
-            </button>
-            {newPass && (
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="rounded-full border border-white/10 px-4 py-2.5 text-sm text-slate-300 hover:text-white transition-colors"
-              >
-                {copied
-                  ? isAr
-                    ? t.copied.ar
-                    : t.copied.en
-                  : isAr
-                    ? t.copy.ar
-                    : t.copy.en}
-              </button>
-            )}
-          </div>
-
-          {/* تأكيد كلمة المرور */}
-          <label className="block space-y-1.5 text-sm text-slate-300">
-            <span>{isAr ? t.confirmPass.ar : t.confirmPass.en}</span>
-            <div className="relative">
-              <input
-                type={showConfirm ? "text" : "password"}
-                value={confirmPass}
-                onChange={(e) => setConfirmPass(e.target.value)}
-                required
-                className={`w-full rounded-2xl border px-4 py-3 pr-12 text-white outline-none placeholder:text-slate-500 bg-slate-950/70 focus:ring-1 ${
-                  confirmPass && newPass === confirmPass
-                    ? "border-emerald-400/40 focus:border-emerald-400/40 focus:ring-emerald-400/20"
-                    : confirmPass
-                      ? "border-rose-400/40 focus:border-rose-400/40 focus:ring-rose-400/20"
-                      : "border-white/10 focus:border-cyan-300/40 focus:ring-cyan-300/20"
-                }`}
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirm((v) => !v)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-              >
-                {showConfirm ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          </label>
-
-          {/* التحقق من الهوية */}
-          <HumanCheck
-            answer={captchaAnswer}
-            onAnswerChange={setCaptchaAnswer}
-            captcha={captcha}
-            loading={captchaLoading}
-            isAr={isAr}
-          />
-
-          {/* أزرار */}
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() =>
-                router.push(lang ? `/admin/login?lang=${lang}` : "/admin/login")
-              }
-              className="rounded-full border border-white/10 px-5 py-3 text-sm text-white hover:bg-white/[0.06] transition-colors"
-            >
-              {isAr ? t.back.ar : t.back.en}
-            </button>
-            <button
-              type="submit"
-              disabled={
-                loading ||
-                captchaLoading ||
-                !captcha ||
-                !captchaAnswer.trim() ||
-                !allRulesPassed
-              }
-              className="flex-1 rounded-full bg-white py-3 text-sm font-semibold text-slate-950 transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading
-                ? isAr
-                  ? t.saving.ar
-                  : t.saving.en
-                : isAr
-                  ? t.save.ar
-                  : t.save.en}
-            </button>
-          </div>
-        </form>
+        <div className="mt-8 border-t border-white/10 pt-6">
+          <Link
+            href={lang ? `/admin/login?lang=${lang}` : "/admin/login"}
+            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {isAr ? "العودة لتسجيل الدخول" : "Back to login"}
+          </Link>
+        </div>
       </div>
     </div>
   );
 }
 
-export default function ResetPasswordPage() {
+export default function ForgotPasswordPage() {
   return (
     <Suspense fallback={null}>
-      <ResetPasswordForm />
+      <ForgotPasswordContent />
     </Suspense>
   );
 }
