@@ -13,7 +13,12 @@ import {
   EyeOff,
   RefreshCw,
 } from "lucide-react";
-import { getSettings, updateSettings, uploadLogo } from "@/lib/admin-api";
+import {
+  getSettings,
+  updateSettings,
+  uploadLogo,
+  getAdminUser,
+} from "@/lib/admin-api";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 type Props = { searchParams?: { lang?: string } };
 
@@ -94,8 +99,16 @@ export default function AdminSettingsPage({ searchParams }: Props) {
   const [showPlatformDropdown, setShowPlatformDropdown] = useState(false);
   const [newSocialUrl, setNewSocialUrl] = useState("");
 
+  // ✅ التحقق من دور المستخدم (admin فقط يرى تغيير كلمة المرور)
+  const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
     fetchSettings();
+  }, []);
+
+  useEffect(() => {
+    const user = getAdminUser();
+    setIsAdmin(user?.is_admin === true);
   }, []);
 
   async function fetchSettings() {
@@ -233,7 +246,7 @@ export default function AdminSettingsPage({ searchParams }: Props) {
       <div className="space-y-6">
         {error && (
           <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-300">
-            ⚠️ {error}
+            ️ {error}
           </div>
         )}
         {loading ? (
@@ -611,8 +624,9 @@ export default function AdminSettingsPage({ searchParams }: Props) {
             </button>
           </form>
         )}
-        {/* ── Change Password ── */}
-        <ChangePassword isAr={isAr} />
+
+        {/* ✅ Change Password — للأدمن فقط */}
+        {isAdmin && <ChangePassword isAr={isAr} />}
       </div>
     </AdminShell>
   );
@@ -727,7 +741,6 @@ function ChangePassword({ isAr }: { isAr: boolean }) {
       <p className="text-base font-semibold text-white">
         {isAr ? "تغيير كلمة المرور" : "Change Password"}
       </p>
-
       {error && (
         <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-300">
           ⚠️ {error}

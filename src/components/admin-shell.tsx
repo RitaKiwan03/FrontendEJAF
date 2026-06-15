@@ -1,9 +1,8 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { Settings } from "lucide-react";
+import { Settings, UserCog } from "lucide-react";
 import {
   LayoutDashboard,
   Layers,
@@ -15,10 +14,11 @@ import {
   Mail,
   Users,
 } from "lucide-react";
-
 import { createLocalizedHref, resolveLocale } from "@/lib/i18n";
+import { getAdminUser } from "@/lib/admin-api";
 import { useEffect, useState } from "react";
 
+// ✅ إضافة adminOnly: true للعناصر التي للأدمن فقط
 const navItems = [
   {
     href: "/admin/dashboard",
@@ -38,7 +38,12 @@ const navItems = [
     labelAr: "المشاريع",
     icon: FolderKanban,
   },
-  { href: "/admin/blog", labelEn: "Blog", labelAr: "المدونة", icon: BookOpen },
+  {
+    href: "/admin/blog",
+    labelEn: "Blog",
+    labelAr: "المدونة",
+    icon: BookOpen,
+  },
   {
     href: "/admin/messages",
     labelEn: "Messages",
@@ -63,6 +68,14 @@ const navItems = [
     labelAr: "الفريق",
     icon: Users,
   },
+  // ✅ جديد — للأدمن فقط
+  {
+    href: "/admin/users",
+    labelEn: "Users",
+    labelAr: "المستخدمون",
+    icon: UserCog,
+    adminOnly: true,
+  },
 ];
 
 type AdminShellProps = {
@@ -79,12 +92,17 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // ✅ حالة المستخدم الحالي
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
   useEffect(() => {
+    // ✅ جلب بيانات المستخدم الحالي
+    const user = getAdminUser();
+    setCurrentUser(user);
+
     // التحقق من وجود token
     const token = document.cookie.includes("ejaf_token");
-
     if (!token) {
-      // إذا لم يكن هناك token، حوّل لصفحة الدخول
       const redirect = encodeURIComponent(pathname);
       router.push(`/admin/login?redirect=${redirect}`);
     } else {
@@ -101,6 +119,12 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
     router.push(locale === "ar" ? "/admin/logout?lang=ar" : "/admin/logout");
   }
 
+  // ✅ تصفية العناصر حسب الدور
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.adminOnly && !currentUser?.is_admin) return false;
+    return true;
+  });
+
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-8 lg:py-8">
       <aside className="flex flex-col gap-4">
@@ -113,6 +137,18 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
               ? "نظام إدارة المحتوى"
               : "Content Management System"}
           </p>
+          {/* ✅ عرض دور المستخدم */}
+          {currentUser && (
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-cyan-400/10 px-2.5 py-1 text-[10px] font-medium text-cyan-300">
+              {currentUser.is_admin
+                ? locale === "ar"
+                  ? "👑 أدمن"
+                  : "👑 Admin"
+                : locale === "ar"
+                  ? "🔹 مشرف"
+                  : "🔹 Moderator"}
+            </div>
+          )}
         </div>
 
         <nav className="rounded-[1.75rem] border border-white/10 bg-white/[0.05] p-3 backdrop-blur-xl">
@@ -120,7 +156,7 @@ export function AdminShell({ title, description, children }: AdminShellProps) {
             {locale === "ar" ? "التنقل" : "Navigation"}
           </p>
           <div className="space-y-1">
-            {navItems.map(({ href, labelEn, labelAr, icon: Icon }) => {
+            {visibleNavItems.map(({ href, labelEn, labelAr, icon: Icon }) => {
               const active = pathname === href;
               return (
                 <Link

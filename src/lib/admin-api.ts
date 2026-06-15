@@ -464,3 +464,54 @@ export async function uploadLogo(file: File, isAr = false): Promise<string> {
   const data = await res.json();
   return data.url;
 }
+
+// ==================== USER MANAGEMENT (Admin only) ====================
+
+// ✅ جلب جميع المستخدمين
+export async function getUsers(isAr = false) {
+  const res = await fetch(`${API_URL}/api/admin/users`, {
+    headers: adminHeaders(isAr),
+    cache: "no-store",
+  });
+  if (!res.ok)
+    throw new Error(t("فشل جلب المستخدمين", "Failed to fetch users", isAr));
+  return res.json();
+}
+
+// ✅ تغيير كلمة مرور الـ Moderator (يتطلب كلمة مرور الأدمن)
+export async function changeModeratorPassword(
+  userId: number,
+  adminPassword: string,
+  newPassword: string,
+  newPasswordConfirmation: string,
+  isAr = false,
+) {
+  const res = await fetch(`${API_URL}/api/admin/users/${userId}/password`, {
+    method: "POST",
+    headers: adminHeaders(isAr),
+    body: JSON.stringify({
+      admin_password: adminPassword,
+      new_password: newPassword,
+      new_password_confirmation: newPasswordConfirmation,
+    }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(
+      errorData.message ||
+        t("فشل تغيير كلمة المرور", "Failed to change password", isAr),
+    );
+  }
+  return res.json();
+}
+
+// ✅ حظر الـ Moderator (حذف جميع توكناته)
+export async function blockModerator(userId: number, isAr = false) {
+  const res = await fetch(`${API_URL}/api/admin/users/${userId}/block`, {
+    method: "POST",
+    headers: adminHeaders(isAr),
+  });
+  if (!res.ok)
+    throw new Error(t("فشل حظر المستخدم", "Failed to block user", isAr));
+  return res.json();
+}
