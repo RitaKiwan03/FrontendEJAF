@@ -2,28 +2,61 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  recoveryVerify, recoveryGetUsers, recoveryResetModerator,
-  recoveryBlockUser, recoveryUnblockUser, recoveryForceLogout,
+  recoveryVerify,
+  recoveryGetUsers,
+  recoveryResetModerator,
+  recoveryBlockUser,
+  recoveryUnblockUser,
+  recoveryForceLogout,
 } from "@/lib/admin-api";
-import { Shield, AlertTriangle, LogOut, Loader2, CheckCircle, Key, Users, Ban, Unlock, Eye, EyeOff } from "lucide-react";
+import {
+  Shield,
+  AlertTriangle,
+  LogOut,
+  Loader2,
+  CheckCircle,
+  Key,
+  Users,
+  Ban,
+  Unlock,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-type User = { id: number; name: string; username: string; role: string; is_admin: boolean; is_blocked: boolean; created_at: string };
+type User = {
+  id: number;
+  name: string;
+  username: string;
+  role: string;
+  is_admin: boolean;
+  is_blocked: boolean;
+  created_at: string;
+};
 
 const t = {
   title: { ar: "صفحة الاسترجاع السرية", en: "Emergency Recovery" },
   subtitle: { ar: "استرجاع طوارئ", en: "Emergency Recovery" },
-  warning: { ar: "هذه الصفحة سرية. أدخل كلمة مرور الأدمن للمتابعة.", en: "This page is secret. Enter admin password to continue." },
+  warning: {
+    ar: "هذه الصفحة سرية. أدخل كلمة مرور الأدمن للمتابعة.",
+    en: "This page is secret. Enter admin password to continue.",
+  },
   adminPassword: { ar: "كلمة مرور الأدمن", en: "Admin Password" },
-  placeholder: { ar: "أدخل كلمة مرور الأدمن...", en: "Enter admin password..." },
+  placeholder: {
+    ar: "أدخل كلمة مرور الأدمن...",
+    en: "Enter admin password...",
+  },
   enter: { ar: "دخول", en: "Enter" },
   verifying: { ar: "جاري التحقق...", en: "Verifying..." },
   users: { ar: "المستخدمون", en: "Users" },
   admin: { ar: "أدمن", en: "Admin" },
   moderator: { ar: "مشرف", en: "Moderator" },
   blocked: { ar: "محظور", en: "Blocked" },
-  resetModerator: { ar: "إعادة تعيين كلمة مرور المشرف", en: "Reset Moderator Password" },
+  resetModerator: {
+    ar: "إعادة تعيين كلمة مرور المشرف",
+    en: "Reset Moderator Password",
+  },
   moderatorUsername: { ar: "اسم المستخدم للمشرف", en: "Moderator Username" },
   newPassword: { ar: "كلمة المرور الجديدة", en: "New Password" },
   reset: { ar: "إعادة التعيين", en: "Reset" },
@@ -32,16 +65,44 @@ const t = {
   unblock: { ar: "فك الحظر", en: "Unblock" },
   blocking: { ar: "جاري...", en: "Blocking..." },
   unblocking: { ar: "جاري...", en: "Unblocking..." },
-  forceLogout: { ar: "تسجيل خروج جميع المستخدمين", en: "Force Logout All Users" },
+  forceLogout: {
+    ar: "تسجيل خروج جميع المستخدمين",
+    en: "Force Logout All Users",
+  },
   loggingOut: { ar: "جاري...", en: "Logging out..." },
   backToLogin: { ar: "العودة لصفحة تسجيل الدخول", en: "Back to Login" },
-  confirmBlock: { ar: (u: string) => `هل أنت متأكد من حظر "${u}"؟ سيتم إلغاء جميع جلساته ومنعه من تسجيل الدخول.`, en: (u: string) => `Are you sure you want to block "${u}"? All sessions will be terminated and login will be prevented.` },
-  confirmUnblock: { ar: (u: string) => `هل تريد فك الحظر عن "${u}"؟ سيتمكن من تسجيل الدخول مرة أخرى.`, en: (u: string) => `Do you want to unblock "${u}"? They will be able to login again.` },
-  confirmLogout: { ar: "هل تريد تسجيل خروج جميع المستخدمين؟", en: "Are you sure you want to logout all users?" },
-  successReset: { ar: (u: string) => `تم تغيير كلمة مرور المشرف "${u}" بنجاح`, en: (u: string) => `Moderator "${u}" password changed successfully` },
-  successBlock: { ar: (u: string) => `تم حظر "${u}" بنجاح`, en: (u: string) => `"${u}" blocked successfully` },
-  successUnblock: { ar: (u: string) => `تم فك الحظر عن "${u}" بنجاح`, en: (u: string) => `"${u}" unblocked successfully` },
-  successLogout: { ar: "تم تسجيل خروج جميع المستخدمين", en: "All users logged out successfully" },
+  confirmBlock: {
+    ar: (u: string) =>
+      `هل أنت متأكد من حظر "${u}"؟ سيتم إلغاء جميع جلساته ومنعه من تسجيل الدخول.`,
+    en: (u: string) =>
+      `Are you sure you want to block "${u}"? All sessions will be terminated and login will be prevented.`,
+  },
+  confirmUnblock: {
+    ar: (u: string) =>
+      `هل تريد فك الحظر عن "${u}"؟ سيتمكن من تسجيل الدخول مرة أخرى.`,
+    en: (u: string) =>
+      `Do you want to unblock "${u}"? They will be able to login again.`,
+  },
+  confirmLogout: {
+    ar: "هل تريد تسجيل خروج جميع المستخدمين؟",
+    en: "Are you sure you want to logout all users?",
+  },
+  successReset: {
+    ar: (u: string) => `تم تغيير كلمة مرور المشرف "${u}" بنجاح`,
+    en: (u: string) => `Moderator "${u}" password changed successfully`,
+  },
+  successBlock: {
+    ar: (u: string) => `تم حظر "${u}" بنجاح`,
+    en: (u: string) => `"${u}" blocked successfully`,
+  },
+  successUnblock: {
+    ar: (u: string) => `تم فك الحظر عن "${u}" بنجاح`,
+    en: (u: string) => `"${u}" unblocked successfully`,
+  },
+  successLogout: {
+    ar: "تم تسجيل خروج جميع المستخدمين",
+    en: "All users logged out successfully",
+  },
 };
 
 export default function RecoveryPage() {
@@ -78,8 +139,11 @@ export default function RecoveryPage() {
       setTempToken(data.temp_token);
       setStep("panel");
       await loadUsers(data.temp_token);
-    } catch (err: any) { setError(err.message); }
-    finally { setLoading(false); }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function loadUsers(token: string) {
@@ -96,34 +160,68 @@ export default function RecoveryPage() {
     setSuccess("");
     try {
       await recoveryResetModerator(tempToken, moderatorUsername, newPassword);
-      setSuccess(isAr ? t.successReset.ar(moderatorUsername) : t.successReset.en(moderatorUsername));
-      setModeratorUsername(""); setNewPassword("");
-    } catch (err: any) { setError(err.message); }
-    finally { setLoading(false); }
+      setSuccess(
+        isAr
+          ? t.successReset.ar(moderatorUsername)
+          : t.successReset.en(moderatorUsername),
+      );
+      setModeratorUsername("");
+      setNewPassword("");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleBlock(userId: number, username: string) {
-    if (!confirm(isAr ? t.confirmBlock.ar(username) : t.confirmBlock.en(username))) return;
+    if (
+      !confirm(isAr ? t.confirmBlock.ar(username) : t.confirmBlock.en(username))
+    )
+      return;
     setBlockingId(userId);
     setError("");
+    setSuccess("");
     try {
       await recoveryBlockUser(tempToken, userId);
-      setSuccess(isAr ? t.successBlock.ar(username) : t.successBlock.en(username));
-      await loadUsers(tempToken);
-    } catch (err: any) { setError(err.message); }
-    finally { setBlockingId(null); }
+      setSuccess(
+        isAr ? t.successBlock.ar(username) : t.successBlock.en(username),
+      );
+      // ✅ تحديث الـ UI فوراً — زر Block يتحول لـ Unblock
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, is_blocked: true } : u)),
+      );
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setBlockingId(null);
+    }
   }
 
   async function handleUnblock(userId: number, username: string) {
-    if (!confirm(isAr ? t.confirmUnblock.ar(username) : t.confirmUnblock.en(username))) return;
+    if (
+      !confirm(
+        isAr ? t.confirmUnblock.ar(username) : t.confirmUnblock.en(username),
+      )
+    )
+      return;
     setUnblockingId(userId);
     setError("");
+    setSuccess("");
     try {
       await recoveryUnblockUser(tempToken, userId);
-      setSuccess(isAr ? t.successUnblock.ar(username) : t.successUnblock.en(username));
-      await loadUsers(tempToken);
-    } catch (err: any) { setError(err.message); }
-    finally { setUnblockingId(null); }
+      setSuccess(
+        isAr ? t.successUnblock.ar(username) : t.successUnblock.en(username),
+      );
+      // ✅ تحديث الـ UI فوراً — زر Unblock يتحول لـ Block
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, is_blocked: false } : u)),
+      );
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setUnblockingId(null);
+    }
   }
 
   async function handleForceLogout() {
@@ -132,13 +230,19 @@ export default function RecoveryPage() {
     setError("");
     try {
       const data = await recoveryForceLogout(tempToken);
-      setSuccess(data.message || (isAr ? t.successLogout.ar : t.successLogout.en));
+      setSuccess(
+        data.message || (isAr ? t.successLogout.ar : t.successLogout.en),
+      );
       setTimeout(() => router.push("/admin/login"), 2000);
-    } catch (err: any) { setError(err.message); }
-    finally { setLoading(false); }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  const inputCls = "w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-2.5 text-white outline-none focus:border-cyan-300/40";
+  const inputCls =
+    "w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-2.5 text-white outline-none focus:border-cyan-300/40";
 
   return (
     <div className="min-h-screen bg-[#0a0e1a] flex items-center justify-center p-4">
@@ -148,15 +252,24 @@ export default function RecoveryPage() {
             <Shield className="h-6 w-6 text-cyan-400" />
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-cyan-400">{isAr ? t.subtitle.ar : t.subtitle.en}</p>
-            <h1 className="text-2xl font-semibold text-white">{isAr ? t.title.ar : t.title.en}</h1>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-cyan-400">
+              {isAr ? t.subtitle.ar : t.subtitle.en}
+            </p>
+            <h1 className="text-2xl font-semibold text-white">
+              {isAr ? t.title.ar : t.title.en}
+            </h1>
           </div>
         </div>
 
-        {error && <div className="mb-4 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-300">⚠️ {error}</div>}
+        {error && (
+          <div className="mb-4 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-300">
+            ⚠️ {error}
+          </div>
+        )}
         {success && (
           <div className="mb-4 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-300 flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />{success}
+            <CheckCircle className="h-4 w-4" />
+            {success}
           </div>
         )}
 
@@ -168,10 +281,27 @@ export default function RecoveryPage() {
             </div>
             <label className="block space-y-1.5 text-sm text-slate-300">
               <span>{isAr ? t.adminPassword.ar : t.adminPassword.en}</span>
-              <input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} required className={inputCls} placeholder={isAr ? t.placeholder.ar : t.placeholder.en} />
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                required
+                className={inputCls}
+                placeholder={isAr ? t.placeholder.ar : t.placeholder.en}
+              />
             </label>
-            <button type="submit" disabled={loading} className="w-full rounded-full bg-cyan-400 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50">
-              {loading ? (isAr ? t.verifying.ar : t.verifying.en) : (isAr ? t.enter.ar : t.enter.en)}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-full bg-cyan-400 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50"
+            >
+              {loading
+                ? isAr
+                  ? t.verifying.ar
+                  : t.verifying.en
+                : isAr
+                  ? t.enter.ar
+                  : t.enter.en}
             </button>
           </form>
         ) : (
@@ -184,7 +314,10 @@ export default function RecoveryPage() {
               </h2>
               <div className="space-y-2">
                 {users.map((u) => (
-                  <div key={u.id} className={`flex items-center justify-between rounded-xl border border-white/10 bg-slate-950/50 px-4 py-2.5 ${u.is_blocked ? "opacity-60" : ""}`}>
+                  <div
+                    key={u.id}
+                    className={`flex items-center justify-between rounded-xl border border-white/10 bg-slate-950/50 px-4 py-2.5 ${u.is_blocked ? "opacity-60" : ""}`}
+                  >
                     <div>
                       <p className="text-sm font-medium text-white flex items-center gap-2">
                         {u.name}
@@ -196,25 +329,51 @@ export default function RecoveryPage() {
                         )}
                       </p>
                       <p className="text-xs text-slate-400">
-                        @{u.username} • <span className={u.is_admin ? "text-cyan-300" : "text-slate-300"}>
-                          {u.is_admin ? (isAr ? t.admin.ar : t.admin.en) : (isAr ? t.moderator.ar : t.moderator.en)}
+                        @{u.username} •{" "}
+                        <span
+                          className={
+                            u.is_admin ? "text-cyan-300" : "text-slate-300"
+                          }
+                        >
+                          {u.is_admin
+                            ? isAr
+                              ? t.admin.ar
+                              : t.admin.en
+                            : isAr
+                              ? t.moderator.ar
+                              : t.moderator.en}
                         </span>
                       </p>
                     </div>
                     {/* ✅ زر الحظر/فك الحظر - للمشرفين فقط */}
-                    {!u.is_admin && (
-                      u.is_blocked ? (
-                        <button onClick={() => handleUnblock(u.id, u.username)} disabled={unblockingId === u.id} className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-300 hover:bg-emerald-400/20 disabled:opacity-50">
-                          {unblockingId === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlock className="h-4 w-4" />}
+                    {!u.is_admin &&
+                      (u.is_blocked ? (
+                        <button
+                          onClick={() => handleUnblock(u.id, u.username)}
+                          disabled={unblockingId === u.id}
+                          className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-300 hover:bg-emerald-400/20 disabled:opacity-50"
+                        >
+                          {unblockingId === u.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Unlock className="h-4 w-4" />
+                          )}
                           {isAr ? t.unblock.ar : t.unblock.en}
                         </button>
                       ) : (
-                        <button onClick={() => handleBlock(u.id, u.username)} disabled={blockingId === u.id} className="inline-flex items-center gap-2 rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-sm text-rose-300 hover:bg-rose-400/20 disabled:opacity-50">
-                          {blockingId === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                        <button
+                          onClick={() => handleBlock(u.id, u.username)}
+                          disabled={blockingId === u.id}
+                          className="inline-flex items-center gap-2 rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-sm text-rose-300 hover:bg-rose-400/20 disabled:opacity-50"
+                        >
+                          {blockingId === u.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Ban className="h-4 w-4" />
+                          )}
                           {isAr ? t.block.ar : t.block.en}
                         </button>
-                      )
-                    )}
+                      ))}
                   </div>
                 ))}
               </div>
@@ -228,31 +387,79 @@ export default function RecoveryPage() {
               </h2>
               <form onSubmit={handleResetModerator} className="space-y-3">
                 <label className="block space-y-1.5 text-sm text-slate-300">
-                  <span>{isAr ? t.moderatorUsername.ar : t.moderatorUsername.en}</span>
-                  <input type="text" value={moderatorUsername} onChange={(e) => setModeratorUsername(e.target.value)} required className={inputCls} placeholder="moderator" />
+                  <span>
+                    {isAr ? t.moderatorUsername.ar : t.moderatorUsername.en}
+                  </span>
+                  <input
+                    type="text"
+                    value={moderatorUsername}
+                    onChange={(e) => setModeratorUsername(e.target.value)}
+                    required
+                    className={inputCls}
+                    placeholder="moderator"
+                  />
                 </label>
                 <label className="block space-y-1.5 text-sm text-slate-300">
                   <span>{isAr ? t.newPassword.ar : t.newPassword.en}</span>
                   <div className="relative">
-                    <input type={showNewPass ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={8} className={inputCls} placeholder="••••••••" />
-                    <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
-                      {showNewPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <input
+                      type={showNewPass ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      className={inputCls}
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPass(!showNewPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+                    >
+                      {showNewPass ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                 </label>
-                <button type="submit" disabled={loading} className="w-full rounded-full bg-cyan-400/20 py-2.5 text-sm font-medium text-cyan-300 hover:bg-cyan-400/30 disabled:opacity-50">
-                  {loading ? (isAr ? t.resetting.ar : t.resetting.en) : (isAr ? t.reset.ar : t.reset.en)}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-full bg-cyan-400/20 py-2.5 text-sm font-medium text-cyan-300 hover:bg-cyan-400/30 disabled:opacity-50"
+                >
+                  {loading
+                    ? isAr
+                      ? t.resetting.ar
+                      : t.resetting.en
+                    : isAr
+                      ? t.reset.ar
+                      : t.reset.en}
                 </button>
               </form>
             </div>
 
             {/* إجبار تسجيل الخروج */}
-            <button onClick={handleForceLogout} disabled={loading} className="w-full rounded-full bg-rose-400/20 py-3 text-sm font-medium text-rose-300 hover:bg-rose-400/30 disabled:opacity-50 flex items-center justify-center gap-2">
+            <button
+              onClick={handleForceLogout}
+              disabled={loading}
+              className="w-full rounded-full bg-rose-400/20 py-3 text-sm font-medium text-rose-300 hover:bg-rose-400/30 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
               <LogOut className="h-4 w-4" />
-              {loading ? (isAr ? t.loggingOut.ar : t.loggingOut.en) : (isAr ? t.forceLogout.ar : t.forceLogout.en)}
+              {loading
+                ? isAr
+                  ? t.loggingOut.ar
+                  : t.loggingOut.en
+                : isAr
+                  ? t.forceLogout.ar
+                  : t.forceLogout.en}
             </button>
 
-            <button onClick={() => router.push("/admin/login")} className="w-full rounded-full border border-white/10 py-2.5 text-sm text-slate-400 hover:text-white">
+            <button
+              onClick={() => router.push("/admin/login")}
+              className="w-full rounded-full border border-white/10 py-2.5 text-sm text-slate-400 hover:text-white"
+            >
               {isAr ? t.backToLogin.ar : t.backToLogin.en}
             </button>
           </div>
