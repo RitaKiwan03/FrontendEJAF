@@ -316,7 +316,7 @@ export default function RecoveryPage() {
                 {users.map((u) => (
                   <div
                     key={u.id}
-                    className={`flex items-center justify-between rounded-xl border border-white/10 bg-slate-950/50 px-4 py-2.5 ${u.is_blocked ? "opacity-60" : ""}`}
+                    className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-950/50 px-4 py-3 ${u.is_blocked ? "opacity-60" : ""}`}
                   >
                     <div>
                       <p className="text-sm font-medium text-white flex items-center gap-2">
@@ -351,7 +351,7 @@ export default function RecoveryPage() {
                         <button
                           onClick={() => handleUnblock(u.id, u.username)}
                           disabled={unblockingId === u.id}
-                          className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-300 hover:bg-emerald-400/20 disabled:opacity-50"
+                          className="inline-flex shrink-0 items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-300 hover:bg-emerald-400/20 disabled:opacity-50"
                         >
                           {unblockingId === u.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -364,7 +364,7 @@ export default function RecoveryPage() {
                         <button
                           onClick={() => handleBlock(u.id, u.username)}
                           disabled={blockingId === u.id}
-                          className="inline-flex items-center gap-2 rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-sm text-rose-300 hover:bg-rose-400/20 disabled:opacity-50"
+                          className="inline-flex shrink-0 items-center gap-2 rounded-full border border-rose-400/20 bg-rose-400/10 px-4 py-2 text-sm text-rose-300 hover:bg-rose-400/20 disabled:opacity-50"
                         >
                           {blockingId === u.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
